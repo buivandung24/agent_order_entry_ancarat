@@ -8,7 +8,7 @@ npm-debug.log*
 /tmp
 
 # File cấu hình thực tế chứa ID/Key (KHÔNG CÔNG KHAI)
-settings.json 
+/config/settings.json
 
 # File khóa Google Service Account
 *.key
