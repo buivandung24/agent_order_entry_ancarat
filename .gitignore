@@ -1,0 +1,20 @@
+# Thư mục phụ thuộc Node.js
+/node_modules
+
+# File nhật ký và bộ nhớ cache
+*.log
+npm-debug.log*
+.DS_Store
+/tmp
+
+# File cấu hình thực tế chứa ID/Key (KHÔNG CÔNG KHAI)
+settings.json 
+
+# File khóa Google Service Account
+*.key
+*.pem
+service_account.json 
+
+# Biến môi trường local
+.env 
+.env.local
