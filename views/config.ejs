@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cấu hình Google Sheets</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Cấu hình Google Sheets</h1>
+
+    <% if (locals.success) { %>
+      <div class="alert success">Lưu thành công!</div>
+    <% } %>
+    <% if (locals.error) { %>
+      <div class="alert error"><%= error %></div>
+    <% } %>
+
+    <form method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <label>Bảng giá (San_Pham):</label>
+        <input type="text" name="banggia_sheet_id" value="<%= config.banggia_sheet_id %>" required />
+      </div>
+
+      <div class="form-group">
+        <label>Danh sách đại lý (Dai_Ly):</label>
+        <input type="text" name="daily_sheet_id" value="<%= config.daily_sheet_id %>" required />
+      </div>
+
+      <div class="form-group">
+        <label>Kết quả (Ket_Qua_...):</label>
+        <input type="text" name="ketqua_sheet_id" value="<%= config.ketqua_sheet_id %>" required />
+      </div>
+
+      <div class="form-group">
+        <label>Service Account JSON:</label>
+        <input type="file" name="service_account_json" accept=".json" />
+        <small>Nếu không thay đổi, giữ nguyên file cũ.</small>
+      </div>
+
+      <button type="submit">Lưu cấu hình</button>
+      <a href="/" class="btn-back" style="float: right;">Quay lại</a>
+    </form>
+  </div>
+</body>
+</html>
