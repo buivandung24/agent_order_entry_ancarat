@@ -1,9 +1,29 @@
+require('dotenv').config();
 const { google } = require('googleapis');
 const fs = require('fs');
 const path = require('path');
 
 const CONFIG_PATH = path.join(__dirname, '../config/settings.json');
-let config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+let config = {
+    banggia_sheet_id: process.env.BANGGIA_SHEET_ID || '',
+    daily_sheet_id: process.env.DAILY_SHEET_ID || '',
+    ketqua_sheet_id: process.env.KETQUA_SHEET_ID || '',
+    service_account: process.env.SERVICE_ACCOUNT_JSON ? JSON.parse(process.env.SERVICE_ACCOUNT_JSON) : {}
+};
+
+// Nếu không có .env → đọc file (cho local)
+if (!process.env.BANGGIA_SHEET_ID && fs.existsSync(CONFIG_PATH)) {
+    config = { ...config, ...JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8')) };
+}
+
+// Hàm lưu config (chỉ hoạt động trên local)
+function setConfig(newConfig) {
+    if (process.env.NODE_ENV === 'production') {
+        throw new Error('Không thể lưu cấu hình trên production. Hãy dùng biến môi trường.');
+    }
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(newConfig, null, 2));
+    config = newConfig;
+}
 
 const auth = new google.auth.GoogleAuth({
     credentials: config.service_account,
@@ -11,11 +31,6 @@ const auth = new google.auth.GoogleAuth({
 });
 
 const sheets = google.sheets({ version: 'v4', auth });
-
-// Đọc lại config khi cần
-function reloadConfig() {
-    config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
-}
 
 // Lấy danh sách sheet
 async function getSheetTitles(spreadsheetId) {
@@ -111,13 +126,9 @@ async function appendOrder(lines, userName) {
 }
 
 module.exports = {
-    getAgents,
-    getProducts,
-    appendOrder,
-    reloadConfig,
-    get config() { return config; },
-    setConfig: (newConfig) => {
-        config = newConfig;
-        fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
-    }
+  getAgents,
+  getProducts,
+  appendOrder,
+  get config() { return config; },
+  setConfig
 };

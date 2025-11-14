@@ -18,3 +18,4 @@ service_account.json
 # Biến môi trường local
 .env 
 .env.local
+config/settings.json

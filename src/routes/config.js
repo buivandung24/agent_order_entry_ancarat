@@ -9,6 +9,12 @@ router.get('/', (req, res) => {
 });
 
 router.post('/', (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.redirect('/config?error=' + encodeURIComponent(
+      'Không thể lưu cấu hình trên production. Vui lòng cấu hình qua biến môi trường.'
+    ));
+  }
+  
   try {
     const { banggia_sheet_id, daily_sheet_id, ketqua_sheet_id } = req.body;
     let service_account = config.service_account;

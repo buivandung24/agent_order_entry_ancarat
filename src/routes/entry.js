@@ -1,10 +1,26 @@
+// src/routes/entry.js
 const express = require('express');
 const router = express.Router();
-const { getAgents, getProducts, appendOrder } = require('../googleSheets');
+const { getAgents, getProducts, appendOrder, config } = require('../googleSheets');
 
 router.get('/', async (req, res) => {
-  const [agents, products] = await Promise.all([getAgents(), getProducts()]);
-  res.render('index', { agents, products, success: req.query.success });
+  // KIỂM TRA CẤU HÌNH
+  if (!config.banggia_sheet_id || !config.daily_sheet_id || !config.ketqua_sheet_id || !Object.keys(config.service_account).length) {
+    return res.redirect('/config?error=' + encodeURIComponent('Vui lòng cấu hình Google Sheets trước khi sử dụng.'));
+  }
+
+  try {
+    const [agents, products] = await Promise.all([getAgents(), getProducts()]);
+    res.render('index', { 
+      agents, 
+      products, 
+      success: req.query.success,
+      error: req.query.error 
+    });
+  } catch (e) {
+    console.error('Lỗi load trang nhập đơn:', e.message);
+    res.redirect('/config?error=' + encodeURIComponent('Lỗi kết nối Google Sheets: ' + e.message));
+  }
 });
 
 router.post('/submit', async (req, res) => {
@@ -22,7 +38,6 @@ router.post('/submit', async (req, res) => {
 
       if (!agent || !product || qty <= 0) continue;
 
-      // Tìm giá sản phẩm
       const products = await getProducts();
       const productData = products.find(p => p.name === product);
       if (!productData) continue;
