@@ -9,11 +9,11 @@ router.get('/', (req, res) => {
 });
 
 router.post('/add', (req, res) => {
-  const { username, password, fullName, role } = req.body;
+  const { username, password, fullName } = req.body;
   const data = loadUsers();
 
-  if (data.users.some(u => u.username === username)) {
-    req.flash('error', 'Tên đăng nhập đã tồn tại');
+  if (data.users.some(u => u.fullName === fullName)) {
+    req.flash('error', 'Tên hiển thị đã tồn tại');
     return res.redirect('/admin');
   }
 
@@ -28,7 +28,7 @@ router.post('/add', (req, res) => {
     username,
     password: hashed,
     fullName,
-    role: role || 'user'
+    role: 'user'
   };
 
   data.users.push(newUser);

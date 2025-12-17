@@ -9,26 +9,20 @@
   <div class="container">
     <h1>Quản lý tài khoản người dùng</h1>
     <a href="/">← Về trang nhập đơn</a>
-
+    <br><br>
     <% if (locals.success_msg) { %>
-      <div><%= success_msg %></div>
+      <div class="success"><%= success_msg %></div>
     <% } %>
     <% if (locals.error_msg) { %>
-      <div><%= error_msg %></div>
+      <div class="error"><%= error_msg %></div>
     <% } %>
-
+    <br><br>
     <h2>Thêm người dùng mới</h2>
     <form method="POST" action="/admin/add">
       <table>
-        <tr><td>Tên đăng nhập</td><td><input name="username" required /></td></tr>
+        <tr><td>Đăng nhập</td><td><input name="username" required /></td></tr>
         <tr><td>Mật khẩu</td><td><input type="password" name="password" required /></td></tr>
         <tr><td>Họ tên</td><td><input name="fullName" required /></td></tr>
-        <tr><td>Vai trò</td><td>
-          <select name="role">
-            <option value="user">User thường</option>
-            <option value="admin">Admin</option>
-          </select>
-        </td></tr>
         <tr><td colspan="2"><button type="submit">Thêm</button></td></tr>
       </table>
     </form>
@@ -36,7 +30,7 @@
     <h2>Danh sách người dùng</h2>
     <table>
       <thead>
-        <tr><th>ID</th><th>Tên đăng nhập</th><th>Họ tên</th><th>Vai trò</th><th>Hành động</th></tr>
+        <tr><th>ID</th><th>Đăng nhập</th><th>Tên hiển thị</th><th>Vai trò</th><th>Hành động</th></tr>
       </thead>
       <tbody>
         <% users.forEach(u => { %>
