@@ -1,0 +1,11 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password": "$2b$10$tkdQqD9To1KI6k.wo7YBlunP72G2VnbtOU/R2192klSRJZyWSXGaS",
+      "fullName": "Quản trị viên",
+      "role": "admin"
+    }
+  ]
+}

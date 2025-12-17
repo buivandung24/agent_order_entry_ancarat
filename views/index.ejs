@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <title>Nhập Đơn Hàng Đại Lý</title>
+  <% if (user && user.role === 'admin') { %>
+    <div style="margin-bottom: 20px;">
+      <a href="/admin" class="btn-config" style="background: #28a745; margin-right: 10px;">Quản lý người dùng</a>
+    </div>
+  <% } %>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
@@ -19,7 +24,7 @@
     <form method="POST" action="/submit">
       <div class="form-group">
         <label>Người nhập:</label>
-        <input type="text" name="user_name" value="Kế toán" />
+        <input type="text" name="user_name" value="<%= user ? user.fullName : 'Kế toán' %>" readonly />
       </div>
 
       <table id="order-table">
@@ -61,7 +66,9 @@
 
       <button type="button" onclick="addRow()">Thêm dòng (+)</button>
       <button type="submit">Ghi dữ liệu</button>
-      <a href="/config" class="btn-config" style="float: right;">Cấu hình</a>
+      <div style="text-align: right; margin-bottom: 10px;">
+        <a href="/logout" style="margin-left: 20px; color: #dc3545;">Đăng xuất</a>
+      </div>
     </form>
   </div>
 
@@ -70,16 +77,23 @@
 
     function addRow() {
       const tbody = document.querySelector('#order-table tbody');
+      const firstAgentSelect = document.querySelector('[name="agent_0"]');
+      const firstProductSelect = document.querySelector('[name="product_0"]');
+
+      // Lấy danh sách option gốc (chỉ lấy lần đầu, không copy từ dòng đã thêm)
+      const agentOptions = firstAgentSelect.innerHTML;
+      const productOptions = firstProductSelect.innerHTML;
+
       const tr = document.createElement('tr');
       tr.className = 'entry-row';
       tr.innerHTML = `
         <td><select name="agent_${rowCount}" required onchange="updatePrice(${rowCount})">
           <option value="">-- Chọn đại lý --</option>
-          ${document.querySelector('[name="agent_0"]').innerHTML}
+          ${agentOptions.replace(/<option value="">-- Chọn đại lý --<\/option>/g, '')}
         </select></td>
         <td><select name="product_${rowCount}" required onchange="updatePrice(${rowCount})">
           <option value="">-- Chọn sản phẩm --</option>
-          ${document.querySelector('[name="product_0"]').innerHTML}
+          ${productOptions.replace(/<option value="">-- Chọn sản phẩm --<\/option>/g, '')}
         </select></td>
         <td><input type="number" name="price_${rowCount}" class="price" readonly /></td>
         <td><input type="number" name="qty_${rowCount}" class="qty" value="1" min="1" onchange="calcTotal(${rowCount})" /></td>

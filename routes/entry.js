@@ -1,4 +1,3 @@
-// src/routes/entry.js
 const express = require('express');
 const router = express.Router();
 const { getAgents, getProducts, appendOrder, config } = require('../googleSheets');
@@ -26,7 +25,7 @@ router.get('/', async (req, res) => {
 router.post('/submit', async (req, res) => {
   try {
     const lines = [];
-    const userName = req.body.user_name || 'Kế toán';
+    const userName = req.session.user?.fullName || 'Unknown';
 
     const agentKeys = Object.keys(req.body).filter(k => k.startsWith('agent_'));
     

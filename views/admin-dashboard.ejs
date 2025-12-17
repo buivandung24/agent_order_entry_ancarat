@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Quản trị người dùng</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Quản lý tài khoản người dùng</h1>
+    <a href="/">← Về trang nhập đơn</a>
+
+    <% if (locals.success_msg) { %>
+      <div><%= success_msg %></div>
+    <% } %>
+    <% if (locals.error_msg) { %>
+      <div><%= error_msg %></div>
+    <% } %>
+
+    <h2>Thêm người dùng mới</h2>
+    <form method="POST" action="/admin/add">
+      <table>
+        <tr><td>Tên đăng nhập</td><td><input name="username" required /></td></tr>
+        <tr><td>Mật khẩu</td><td><input type="password" name="password" required /></td></tr>
+        <tr><td>Họ tên</td><td><input name="fullName" required /></td></tr>
+        <tr><td>Vai trò</td><td>
+          <select name="role">
+            <option value="user">User thường</option>
+            <option value="admin">Admin</option>
+          </select>
+        </td></tr>
+        <tr><td colspan="2"><button type="submit">Thêm</button></td></tr>
+      </table>
+    </form>
+
+    <h2>Danh sách người dùng</h2>
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Tên đăng nhập</th><th>Họ tên</th><th>Vai trò</th><th>Hành động</th></tr>
+      </thead>
+      <tbody>
+        <% users.forEach(u => { %>
+          <tr>
+            <td><%= u.id %></td>
+            <td><%= u.username %></td>
+            <td><%= u.fullName %></td>
+            <td><%= u.role === 'admin' ? 'Admin' : 'User' %></td>
+            <td>
+              <% if (u.username !== 'admin') { %> <!-- bảo vệ tài khoản admin gốc -->
+                <form method="POST" action="/admin/delete/<%= u.id %>" style="display:inline">
+                  <button type="submit" onclick="return confirm('Xóa thật không?')">Xóa</button>
+                </form>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
