@@ -2,9 +2,9 @@
   "users": [
     {
       "id": 1,
-      "username": "admin",
-      "password": "$2b$10$tkdQqD9To1KI6k.wo7YBlunP72G2VnbtOU/R2192klSRJZyWSXGaS",
-      "fullName": "Quản trị viên",
+      "username": "ancarat_manager_2025",
+      "password": "$2b$10$yq0FkjJxljUj5R2LImyh/uTa3I9PCXyTapjSZDCFqSIWzNxDeb19m",
+      "fullName": "admin",
       "role": "admin"
     }
   ]

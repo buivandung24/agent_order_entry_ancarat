@@ -11,21 +11,21 @@ const bcrypt = require('bcrypt');
 
 (function createDefaultAdmin() {
   const data = loadUsers();
-  const adminExists = data.users.some(u => u.username === 'admin');
+  const adminExists = data.users.some(u => u.username === 'ancarat_manager_2025');
 
   if (!adminExists) {
-    const hashedPassword = bcrypt.hashSync('123456', 10);
+    const hashedPassword = bcrypt.hashSync('Anc@rat!_Secure#2025', 10);
     const adminUser = {
       id: data.users.length > 0 ? Math.max(...data.users.map(u => u.id)) + 1 : 1,
-      username: 'admin',
+      username: 'ancarat_manager_2025',
       password: hashedPassword,
-      fullName: 'Quản trị viên',
+      fullName: 'admin',
       role: 'admin'
     };
 
     data.users.push(adminUser);
     saveUsers(data);
-    console.log('Đã tự động tạo tài khoản admin mặc định (username: admin, password: 123456)');
+    console.log('Đã tự động tạo tài khoản admin mặc định (username: ancarat_manager_2025, password: Anc@rat!_Secure#2025)');
   } else {
     console.log('Tài khoản admin đã tồn tại');
   }
