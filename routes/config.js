@@ -16,7 +16,7 @@ router.post('/', (req, res) => {
   }
   
   try {
-    const { banggia_sheet_id, daily_sheet_id, ketqua_sheet_id } = req.body;
+    const { banggia_sheet_id, daily_sheet_id, ketqua_sheet_id, product_api_url } = req.body;
     let service_account = config.service_account;
 
     if (req.files && req.files.service_account_json) {
@@ -29,6 +29,7 @@ router.post('/', (req, res) => {
       banggia_sheet_id: banggia_sheet_id.trim(),
       daily_sheet_id: daily_sheet_id.trim(),
       ketqua_sheet_id: ketqua_sheet_id.trim(),
+      product_api_url: product_api_url?.trim() || '',
       service_account
     };
 

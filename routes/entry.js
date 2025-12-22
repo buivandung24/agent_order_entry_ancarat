@@ -31,21 +31,23 @@ router.post('/submit', async (req, res) => {
     
     for (const key of agentKeys) {
       const index = key.split('_')[1];
-      const agent = req.body[`agent_${index}`];
-      const product = req.body[`product_${index}`];
+      const agent = req.body[`agent_${index}`]?.trim();
+      const product = req.body[`product_${index}`]?.trim();
       const qty = parseInt(req.body[`qty_${index}`]) || 0;
+      const priceChot = parseFloat(req.body[`price_${index}`]) || 0;  // ← LẤY TỪ FORM
+      const agentDiscount = parseFloat(req.body[`discount_${index}`]) || 0;
 
-      if (!agent || !product || qty <= 0) continue;
-
-      const products = await getProducts();
-      const productData = products.find(p => p.name === product);
-      if (!productData) continue;
+      if (!agent || !product || qty <= 0 || priceChot <= 0) continue;
 
       lines.push({
         agent,
         product,
-        price: productData.price,
-        quantity: qty
+        price: priceChot,              // ← Giá chốt từ người dùng
+        quantity: qty,
+        discountPercent: agentDiscount,
+        total: priceChot * qty,
+        discountAmount: (priceChot * qty) * (agentDiscount / 100),
+        finalAmount: (priceChot * qty) * (1 - agentDiscount / 100)
       });
     }
 

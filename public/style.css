@@ -11,3 +11,276 @@ button { padding: 8px 16px; margin: 5px; cursor: pointer; }
 .success { background: #d4edda; color: #155724; }
 .error { background: #f8d7da; color: #721c24; }
 .btn-config, .btn-back { display: inline-block; padding: 8px 16px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; margin-top: 10px; }
+
+input[list] {
+    padding: 8px 30px 8px 10px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23666' d='M0 0l6 8 6-8z'/%3E%3C/svg%3E") no-repeat right 12px center;
+    background-size: 12px;
+    width: 100%;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#submit-btn.loading {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* --- GLOBAL STYLE (Dùng chung cho cả 4 file) --- */
+* { box-sizing: border-box; }
+body { 
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; /* Font hiện đại hơn */
+    background: #f0f2f5; 
+    margin: 0; 
+    padding: 20px; 
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Container chính dạng Card */
+.container { 
+    width: 100%;
+    max-width: 1400px; /* Cho phép rộng hơn trên màn to */
+    margin: 0 auto; 
+    background: white; 
+    padding: 20px; 
+    border-radius: 10px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+    display: flex;
+    flex-direction: column;
+    max-height: 95vh; /* Giới hạn chiều cao để tạo thanh cuộn bên trong */
+}
+
+h1 { text-align: center; color: #343a40; margin-top: 0; font-size: 24px; }
+h2 { color: #495057; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+
+/* Alert Styles */
+.alert { padding: 12px; margin: 10px 0; border-radius: 6px; font-weight: 500; }
+.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+/* --- RIÊNG CHO BẢNG NHẬP LIỆU (INDEX.EJS) --- */
+
+/* Wrapper tạo thanh cuộn cho bảng */
+.table-responsive {
+    flex: 1; /* Chiếm hết khoảng trống còn lại */
+    overflow: auto; /* Cuộn ngang và dọc */
+    border: 1px solid #dee2e6;
+    margin-bottom: 15px;
+    border-radius: 4px;
+}
+
+#order-table { 
+    width: 100%; 
+    border-collapse: separate; /* Để hỗ trợ sticky header */
+    border-spacing: 0;
+}
+
+/* Sticky Header: Luôn nổi ở trên khi cuộn */
+#order-table thead th { 
+    position: sticky; 
+    top: 0; 
+    background: #e9ecef; 
+    color: #495057; 
+    z-index: 10;
+    padding: 12px 10px;
+    border-bottom: 2px solid #dee2e6;
+    border-right: 1px solid #dee2e6;
+    white-space: nowrap;
+    text-align: left;
+    font-weight: 600;
+}
+
+#order-table tbody td {
+    border-bottom: 1px solid #dee2e6;
+    border-right: 1px solid #dee2e6;
+    padding: 0; /* Bỏ padding để input tràn viền */
+    background: #fff;
+}
+
+/* CẤU HÌNH ĐỘ RỘNG CỘT - GIẢI QUYẾT TÊN DÀI */
+#order-table th:nth-child(1), #order-table td:nth-child(1) { min-width: 220px; width: 20%; } /* Đại lý */
+#order-table th:nth-child(3), #order-table td:nth-child(3) { min-width: 350px; width: 30%; } /* Sản phẩm - Rất rộng */
+#order-table th:nth-child(2) { min-width: 80px; } /* CK */
+#order-table th:nth-child(4), 
+#order-table th:nth-child(6), 
+#order-table th:nth-child(7), 
+#order-table th:nth-child(8) { min-width: 120px; text-align: right; } /* Các cột tiền */
+
+/* Input trong bảng: Tràn viền, nhìn sạch sẽ */
+#order-table input { 
+    width: 100%; 
+    padding: 10px 12px; 
+    border: none; 
+    outline: none;
+    font-size: 14px;
+    background: transparent;
+}
+
+#order-table input:focus { 
+    background: #e8f0fe; /* Highlight màu xanh nhạt khi nhập */
+    box-shadow: inset 0 -2px 0 #0d6efd;
+}
+
+/* Căn phải cho số */
+.price, .qty, .total, .discount, .discount-amount, .final-amount { text-align: right; }
+
+/* Các ô Readonly (không sửa) làm màu xám nhẹ */
+input[readonly] { color: #555; cursor: default; }
+
+/* --- BUTTONS & ACTIONS --- */
+.action-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 10px;
+    background: white;
+    border-top: 1px solid #eee;
+}
+
+button { 
+    padding: 10px 18px; 
+    cursor: pointer; 
+    border-radius: 5px; 
+    border: none; 
+    font-size: 14px;
+    font-weight: 500;
+    transition: 0.2s;
+}
+
+.btn-add { background: #28a745; color: white; }
+.btn-add:hover { background: #218838; }
+
+#submit-btn { background: #007bff; color: white; }
+#submit-btn:hover { background: #0069d9; }
+#submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+.btn-remove { 
+    background: transparent; 
+    color: #dc3545; 
+    font-weight: bold;
+    padding: 5px 10px;
+}
+.btn-remove:hover { background: #fee; border-radius: 4px; }
+
+/* Custom icon dropdown cho input list */
+input[list] {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 10px;
+}
+
+/* Style cơ bản cho các bảng Admin/Config (kế thừa style đẹp) */
+table:not(#order-table) { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+table:not(#order-table) th, table:not(#order-table) td { padding: 10px; border: 1px solid #dee2e6; text-align: left; }
+table:not(#order-table) th { background: #e9ecef; }
+
+/* --- GIỮ LẠI CÁC STYLE CŨ VÀ CẬP NHẬT CÁC PHẦN SAU --- */
+
+/* 1. Cấu hình lại độ rộng cột trong bảng */
+#order-table th:nth-child(1), #order-table td:nth-child(1) { min-width: 220px; width: 20%; } /* Đại lý */
+#order-table th:nth-child(3), #order-table td:nth-child(3) { min-width: 350px; width: 30%; } /* Sản phẩm */
+
+/* CỘT SỐ LƯỢNG (Cột 5) - SỬA Ở ĐÂY: Tăng độ rộng để không che số */
+#order-table th:nth-child(5), #order-table td:nth-child(5) { 
+    min-width: 100px; /* Đủ rộng cho số > 100 */
+    text-align: right;
+}
+
+/* Các cột tiền khác */
+#order-table th:nth-child(4), /* Giá */
+#order-table th:nth-child(6), /* Tổng */
+#order-table th:nth-child(7), /* Tiền CK */
+#order-table th:nth-child(8) { /* Thành tiền */
+    min-width: 120px; 
+    text-align: right; 
+}
+
+/* 2. Header chứa Tiêu đề và Nút Admin */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.page-header h1 {
+    margin: 0;
+    text-align: left; /* Căn trái cho đẹp mắt khi có nút bên cạnh */
+}
+
+/* 3. Nút Đăng xuất - Ghim góc màn hình (Fixed Position) */
+.btn-logout-fixed {
+    position: fixed;
+    bottom: 20px;
+    left: 20px; /* Góc trái dưới cùng - xa nút Lưu để tránh ấn nhầm */
+    background-color: #dc3545; /* Màu đỏ cảnh báo */
+    color: white;
+    padding: 10px 20px;
+    border-radius: 30px; /* Bo tròn kiểu pill cho đẹp */
+    text-decoration: none;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(220, 53, 69, 0.4);
+    z-index: 1000; /* Luôn nổi trên cùng */
+    transition: transform 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-logout-fixed:hover {
+    background-color: #c82333;
+    transform: translateY(-2px); /* Hiệu ứng nảy lên nhẹ */
+}
+
+/* Wrapper cho bảng trong trang Admin */
+.admin-table-container {
+    max-height: 400px; /* Giới hạn chiều cao danh sách người dùng */
+    overflow-y: auto;  /* Cuộn dọc nếu nhiều người dùng */
+    overflow-x: auto;  /* Cuộn ngang nếu màn hình nhỏ */
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-top: 15px;
+}
+
+/* Làm bảng admin đẹp hơn */
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px; /* Đảm bảo không bị quá hẹp */
+}
+
+.admin-table th {
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 5;
+    border-bottom: 2px solid #dee2e6;
+    padding: 12px;
+}
+
+.admin-table td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Nút xóa trong bảng admin */
+.btn-delete {
+    background-color: #ff4d4f;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-delete:hover {
+    background-color: #ff7875;
+}

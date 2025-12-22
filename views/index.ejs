@@ -3,105 +3,165 @@
 <head>
   <meta charset="UTF-8" />
   <title>Nhập Đơn Hàng Đại Lý</title>
-  <% if (user && user.role === 'admin') { %>
-    <div style="margin-bottom: 20px;">
-      <a href="/admin" class="btn-config" style="background: #28a745; margin-right: 10px;">Quản lý người dùng</a>
-    </div>
-  <% } %>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
+  <a href="/logout" class="btn-logout-fixed">
+    ⎋ Đăng xuất
+  </a>
+
   <div class="container">
-    <h1>Nhập Đơn Hàng Đại Lý</h1>
+    <div class="page-header">
+      <h1>Nhập Đơn Hàng Đại Lý</h1>
+      
+      <% if (user && user.role === 'admin') { %>
+        <a href="/admin" class="btn-config" style="background: #6c757d; color: white; padding: 8px 16px; text-decoration: none; border-radius: 6px; font-weight: 500;">
+          ⚙ Quản lý hệ thống
+        </a>
+      <% } %>
+    </div>
 
     <% if (locals.success) { %>
-      <div class="alert success">Ghi thành công!</div>
+      <div class="alert success">✓ Ghi thành công!</div>
     <% } %>
     <% if (locals.error) { %>
-      <div class="alert error"><%= error %></div>
+      <div class="alert error">⚠ <%= error %></div>
     <% } %>
 
-    <form method="POST" action="/submit">
-      <div class="form-group">
-        <label>Người nhập:</label>
-        <input type="text" name="user_name" value="<%= user ? user.fullName : 'Kế toán' %>" readonly />
+    <form method="POST" action="/submit" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+      
+      <div class="table-responsive">
+        <table id="order-table">
+          <thead>
+            <tr>
+              <th>Đại lý</th>
+              <th>CK %</th>
+              <th>Sản phẩm</th>
+              <th>Giá</th>
+              <th>Số lượng</th> <th>Tổng</th>
+              <th>Tiền CK</th>
+              <th>Thành tiền</th>
+              <th style="width: 50px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="entry-row" data-index="0">
+              <td>
+                <input type="text" name="agent_0" list="agents_list" required placeholder="Tìm đại lý..." autocomplete="off" oninput="updateAgentInfo(this)"/>
+              </td>
+              <td>
+                <input type="number" name="discount_0" class="discount" readonly placeholder="0" step="0.01" tabindex="-1" style="background: #f8f9fa;"/>
+              </td>
+              <td>
+                <input type="text" name="product_0" list="products_list" required placeholder="Tìm sản phẩm..." autocomplete="off" oninput="updatePrice(this)" />
+              </td>
+              <td><input type="number" name="price_0" class="price" readonly tabindex="-1" style="background: #f8f9fa;"/></td>
+              
+              <td><input type="number" name="qty_0" class="qty" value="1" min="1" oninput="calcTotal(this)" /></td>
+              
+              <td><input type="number" name="total_0" class="total" readonly tabindex="-1" style="background: #f8f9fa;"/></td>
+              <td><input type="number" name="discount_amount_0" class="discount-amount" readonly tabindex="-1" style="background: #f8f9fa;"/></td>
+              <td><input type="number" name="final_amount_0" class="final-amount" readonly tabindex="-1" style="font-weight: bold; color: #d63384; background: #f8f9fa;" /></td>
+              <td style="text-align: center; vertical-align: middle;">
+                <button type="button" class="btn-remove" onclick="removeRow(this)" title="Xóa dòng">✕</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <table id="order-table">
-        <thead>
-          <tr>
-            <th>Đại lý</th>
-            <th>Sản phẩm</th>
-            <th>Giá</th>
-            <th>Số lượng</th>
-            <th>Tổng</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="entry-row">
-            <td>
-              <select name="agent_0" required onchange="updatePrice(0)">
-                <option value="">-- Chọn đại lý --</option>
-                <% agents.forEach(a => { %>
-                  <option><%= a %></option>
-                <% }) %>
-              </select>
-            </td>
-            <td>
-              <select name="product_0" required onchange="updatePrice(0)">
-                <option value="">-- Chọn sản phẩm --</option>
-                <% products.forEach(p => { %>
-                  <option data-price="<%= p.price %>"><%= p.name %></option>
-                <% }) %>
-              </select>
-            </td>
-            <td><input type="number" name="price_0" class="price" readonly /></td>
-            <td><input type="number" name="qty_0" class="qty" value="1" min="1" onchange="calcTotal(0)" /></td>
-            <td><input type="number" name="total_0" class="total" readonly /></td>
-            <td><button type="button" onclick="removeRow(this)">Xóa</button></td>
-          </tr>
-        </tbody>
-      </table>
-
-      <button type="button" onclick="addRow()">Thêm dòng (+)</button>
-      <button type="submit">Ghi dữ liệu</button>
-      <div style="text-align: right; margin-bottom: 10px;">
-        <a href="/logout" style="margin-left: 20px; color: #dc3545;">Đăng xuất</a>
+      <div class="action-bar" style="justify-content: space-between;">
+        <button type="button" class="btn-add" onclick="addRow()">+ Thêm dòng</button>
+        <button type="submit" id="submit-btn">Lưu dữ liệu</button>
       </div>
     </form>
+
+    <datalist id="agents_list">
+      <% agents.forEach(a => { %>
+        <option value="<%= a.name %>"></option>
+      <% }) %>
+    </datalist>
+
+    <datalist id="products_list">
+      <% products.forEach(p => { %>
+        <option value="<%= p.name %>" data-price="<%= p.price %>"></option>
+      <% }) %>
+    </datalist>
   </div>
 
   <script>
     let rowCount = 1;
+    let isSubmitting = false;
+
+    const agentDiscounts = new Map();
+    <% agents.forEach(a => { %>
+      agentDiscounts.set("<%= a.name.toLowerCase().trim() %>", <%= a.discount %>);
+    <% }) %>
+    
+    const productPricesAtLoad = {};
+    <% products.forEach(p => { %>
+       productPricesAtLoad["<%= p.name.toLowerCase().replace(/"/g, '\\"') %>"] = <%= p.price %>;
+    <% }) %>
+
+    // ... (Giữ nguyên các hàm updateAgentInfo, updatePrice, calcTotal) ...
+    function updateAgentInfo(inputElement) { /* ... code cũ ... */ 
+        const agentName = inputElement.value.trim();
+        const row = inputElement.closest('tr');
+        const discountInput = row.querySelector('.discount');
+        if (!agentName) { discountInput.value = ''; calcTotal(row.querySelector('.qty')); return; }
+        const lowerName = agentName.toLowerCase();
+        const discount = agentDiscounts.get(lowerName);
+        discountInput.value = (discount !== undefined) ? discount : '';
+        calcTotal(row.querySelector('.qty'));
+    }
+
+    function updatePrice(inputElement) { /* ... code cũ ... */
+        const productName = inputElement.value.trim();
+        const row = inputElement.closest('tr');
+        const priceInput = row.querySelector('.price');
+        if (!productName) { priceInput.value = ''; calcTotal(row.querySelector('.qty')); return; }
+        const price = productPricesAtLoad[productName.toLowerCase()];
+        priceInput.value = price || '';
+        calcTotal(row.querySelector('.qty'));
+    }
+
+    function calcTotal(qtyInput) { /* ... code cũ ... */
+        if (!qtyInput) return;
+        const row = qtyInput.closest('tr');
+        const price = parseFloat(row.querySelector('.price').value) || 0;
+        const qty = parseInt(qtyInput.value) || 0;
+        const total = price * qty;
+        row.querySelector('.total').value = total;
+        const discountPercent = parseFloat(row.querySelector('.discount').value) || 0;
+        const discountAmount = total * (discountPercent / 100);
+        row.querySelector('.discount-amount').value = discountAmount;
+        row.querySelector('.final-amount').value = total - discountAmount;
+    }
 
     function addRow() {
       const tbody = document.querySelector('#order-table tbody');
-      const firstAgentSelect = document.querySelector('[name="agent_0"]');
-      const firstProductSelect = document.querySelector('[name="product_0"]');
-
-      // Lấy danh sách option gốc (chỉ lấy lần đầu, không copy từ dòng đã thêm)
-      const agentOptions = firstAgentSelect.innerHTML;
-      const productOptions = firstProductSelect.innerHTML;
-
+      const index = rowCount;
       const tr = document.createElement('tr');
       tr.className = 'entry-row';
+      tr.dataset.index = index;
+      
+      // HTML khớp với bảng ở trên
       tr.innerHTML = `
-        <td><select name="agent_${rowCount}" required onchange="updatePrice(${rowCount})">
-          <option value="">-- Chọn đại lý --</option>
-          ${agentOptions.replace(/<option value="">-- Chọn đại lý --<\/option>/g, '')}
-        </select></td>
-        <td><select name="product_${rowCount}" required onchange="updatePrice(${rowCount})">
-          <option value="">-- Chọn sản phẩm --</option>
-          ${productOptions.replace(/<option value="">-- Chọn sản phẩm --<\/option>/g, '')}
-        </select></td>
-        <td><input type="number" name="price_${rowCount}" class="price" readonly /></td>
-        <td><input type="number" name="qty_${rowCount}" class="qty" value="1" min="1" onchange="calcTotal(${rowCount})" /></td>
-        <td><input type="number" name="total_${rowCount}" class="total" readonly /></td>
-        <td><button type="button" onclick="removeRow(this)">Xóa</button></td>
+        <td><input type="text" name="agent_${index}" list="agents_list" required placeholder="Tìm đại lý..." autocomplete="off" oninput="updateAgentInfo(this)" /></td>
+        <td><input type="number" name="discount_${index}" class="discount" readonly placeholder="0" step="0.01" tabindex="-1" style="background: #f8f9fa;" /></td>
+        <td><input type="text" name="product_${index}" list="products_list" required placeholder="Tìm sản phẩm..." autocomplete="off" oninput="updatePrice(this)" /></td>
+        <td><input type="number" name="price_${index}" class="price" readonly tabindex="-1" style="background: #f8f9fa;" /></td>
+        <td><input type="number" name="qty_${index}" class="qty" value="1" min="1" oninput="calcTotal(this)" /></td>
+        <td><input type="number" name="total_${index}" class="total" readonly tabindex="-1" style="background: #f8f9fa;" /></td>
+        <td><input type="number" name="discount_amount_${index}" class="discount-amount" readonly tabindex="-1" style="background: #f8f9fa;" /></td>
+        <td><input type="number" name="final_amount_${index}" class="final-amount" readonly tabindex="-1" style="font-weight: bold; color: #d63384; background: #f8f9fa;" /></td>
+        <td style="text-align: center; vertical-align: middle;">
+            <button type="button" class="btn-remove" onclick="removeRow(this)">✕</button>
+        </td>
       `;
       tbody.appendChild(tr);
       rowCount++;
+      tr.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function removeRow(btn) {
@@ -110,23 +170,25 @@
       }
     }
 
-    function updatePrice(idx) {
-      const productSelect = document.querySelector(`[name="product_${idx}"]`);
-      const priceInput = document.querySelector(`[name="price_${idx}"]`);
-      const selected = productSelect.options[productSelect.selectedIndex];
-      const price = selected.getAttribute('data-price') || 0;
-      priceInput.value = price;
-      calcTotal(idx);
-    }
+    // Submit handler giữ nguyên
+    document.querySelector('form').addEventListener('submit', function(e) {
+      if (isSubmitting) { e.preventDefault(); return false; }
+      const submitBtn = document.getElementById('submit-btn');
+      
+      const rows = document.querySelectorAll('.price').forEach(input => input.readOnly = false);
+      let hasValidRow = false;
+      for (const row of rows) {
+        const agent = row.querySelector('input[name^="agent_"]').value.trim();
+        const product = row.querySelector('input[name^="product_"]').value.trim();
+        const qty = row.querySelector('input[name^="qty_"]').value;
+        if (agent && product && qty > 0) { hasValidRow = true; break; }
+      }
+      if (!hasValidRow) { alert('Vui lòng nhập ít nhất một dòng hợp lệ!'); e.preventDefault(); return; }
 
-    function calcTotal(idx) {
-      const price = parseFloat(document.querySelector(`[name="price_${idx}"]`).value) || 0;
-      const qty = parseInt(document.querySelector(`[name="qty_${idx}"]`).value) || 0;
-      document.querySelector(`[name="total_${idx}"]`).value = price * qty;
-    }
-
-    // Khởi tạo dòng đầu
-    updatePrice(0);
+      isSubmitting = true;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Đang lưu...';
+    });
   </script>
 </body>
 </html>
