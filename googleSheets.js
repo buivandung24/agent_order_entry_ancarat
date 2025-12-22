@@ -1,3 +1,8 @@
+const dayjs = require('dayjs');
+require('dayjs/plugin/timezone');
+require('dayjs/plugin/utc');
+dayjs.extend(require('dayjs/plugin/timezone'));
+dayjs.extend(require('dayjs/plugin/utc'));
 require('dotenv').config();
 const { google } = require('googleapis');
 const fs = require('fs');
@@ -184,10 +189,9 @@ async function appendOrder(lines, userName) {
     const uniqueProductNames = [...new Set(lines.map(line => line.product.trim()))];
     const currentPrices = await fetchCurrentPrices(uniqueProductNames);
 
-    // Chỉ lấy giờ:phút
-    const now = new Date();
-    const timeStr = now.getHours().toString().padStart(2, '0') + ':' + 
-                    now.getMinutes().toString().padStart(2, '0');
+    // Lấy giờ Việt Nam chính xác (Asia/Ho_Chi_Minh)
+    const vnTime = dayjs().tz('Asia/Ho_Chi_Minh');
+    const timeStr = vnTime.format('HH:mm');
 
     const values = lines.map(line => {
         const productLower = line.product.trim().toLowerCase();
@@ -207,8 +211,8 @@ async function appendOrder(lines, userName) {
             line.agent.trim(),
             line.discountPercent || 0,
             line.product.trim(),
-            line.price,                    // Giá chốt
-            currentPrice || '',            // Giá hiện tại
+            line.price,                  
+            currentPrice || '',          
             line.quantity,
             totalOld,
             discountAmountOld,
