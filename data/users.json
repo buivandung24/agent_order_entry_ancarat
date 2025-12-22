@@ -1,9 +1,9 @@
 {
   "users": [
     {
-      "id": 2,
-      "username": "admin",
-      "password": "$2b$10$iAW/PRrs4ZZfsDc8fYCRIu8xHL7pk3NL0f6TomMtOPoLN3gWe0aBS",
+      "id": 1,
+      "username": "ancarat_manager_2025",
+      "password": "$2b$10$pU7h5SGqyD3klfbPVO8XBOl./B3KLbKsuATJbSCyAusQyLKSW/ivy",
       "fullName": "admin",
       "role": "admin"
     }

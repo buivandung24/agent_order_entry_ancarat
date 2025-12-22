@@ -11,13 +11,13 @@ const bcrypt = require('bcrypt');
 
 (function createDefaultAdmin() {
   const data = loadUsers();
-  const adminExists = data.users.some(u => u.username === 'admin');
+  const adminExists = data.users.some(u => u.username === 'ancarat_manager_2025');
 
   if (!adminExists) {
-    const hashedPassword = bcrypt.hashSync('123456', 10);
+    const hashedPassword = bcrypt.hashSync('Anc@rat!_Secure#2025', 10);
     const adminUser = {
       id: data.users.length > 0 ? Math.max(...data.users.map(u => u.id)) + 1 : 1,
-      username: 'admin',
+      username: 'ancarat_manager_2025',
       password: hashedPassword,
       fullName: 'admin',
       role: 'admin'
