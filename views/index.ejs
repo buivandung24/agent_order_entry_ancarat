@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Nhập Đơn Hàng Đại Lý</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
@@ -46,22 +47,22 @@
           </thead>
           <tbody>
             <tr class="entry-row" data-index="0">
-              <td>
+              <td data-label="Đại lý">
                 <input type="text" name="agent_0" list="agents_list" required placeholder="Tìm đại lý..." autocomplete="off" oninput="updateAgentInfo(this)"/>
               </td>
-              <td>
+              <td data-label="CK %">
                 <input type="number" name="discount_0" class="discount" readonly placeholder="0" step="0.01" tabindex="-1" style="background: #f8f9fa;"/>
               </td>
-              <td>
+              <td data-label="Sản phẩm">
                 <input type="text" name="product_0" list="products_list" required placeholder="Tìm sản phẩm..." autocomplete="off" oninput="updatePrice(this)" />
               </td>
-              <td><input type="number" name="price_0" class="price" readonly tabindex="-1" style="background: #f8f9fa;"/></td>
+              <td data-label="Giá"><input type="number" name="price_0" class="price" readonly tabindex="-1" style="background: #f8f9fa;"/></td>
               
-              <td><input type="number" name="qty_0" class="qty" value="1" min="1" oninput="calcTotal(this)" /></td>
+              <td data-label="Số lượng"><input type="number" name="qty_0" inputmode="numeric" class="qty" value="1" min="1" oninput="calcTotal(this)" /></td>
               
-              <td><input type="number" name="total_0" class="total" readonly tabindex="-1" style="background: #f8f9fa;"/></td>
-              <td><input type="number" name="discount_amount_0" class="discount-amount" readonly tabindex="-1" style="background: #f8f9fa;"/></td>
-              <td><input type="number" name="final_amount_0" class="final-amount" readonly tabindex="-1" style="font-weight: bold; color: #d63384; background: #f8f9fa;" /></td>
+              <td data-label="Tổng"><input type="number" name="total_0" class="total" readonly tabindex="-1" style="background: #f8f9fa;"/></td>
+              <td data-label="Tiền CK"><input type="number" name="discount_amount_0" class="discount-amount" readonly tabindex="-1" style="background: #f8f9fa;"/></td>
+              <td data-label="Thành tiền"><input type="number" name="final_amount_0" class="final-amount" readonly tabindex="-1" style="font-weight: bold; color: #d63384; background: #f8f9fa;" /></td>
               <td style="text-align: center; vertical-align: middle;">
                 <button type="button" class="btn-remove" onclick="removeRow(this)" title="Xóa dòng">✕</button>
               </td>
@@ -147,14 +148,14 @@
       
       // HTML khớp với bảng ở trên
       tr.innerHTML = `
-        <td><input type="text" name="agent_${index}" list="agents_list" required placeholder="Tìm đại lý..." autocomplete="off" oninput="updateAgentInfo(this)" /></td>
-        <td><input type="number" name="discount_${index}" class="discount" readonly placeholder="0" step="0.01" tabindex="-1" style="background: #f8f9fa;" /></td>
-        <td><input type="text" name="product_${index}" list="products_list" required placeholder="Tìm sản phẩm..." autocomplete="off" oninput="updatePrice(this)" /></td>
-        <td><input type="number" name="price_${index}" class="price" readonly tabindex="-1" style="background: #f8f9fa;" /></td>
-        <td><input type="number" name="qty_${index}" class="qty" value="1" min="1" oninput="calcTotal(this)" /></td>
-        <td><input type="number" name="total_${index}" class="total" readonly tabindex="-1" style="background: #f8f9fa;" /></td>
-        <td><input type="number" name="discount_amount_${index}" class="discount-amount" readonly tabindex="-1" style="background: #f8f9fa;" /></td>
-        <td><input type="number" name="final_amount_${index}" class="final-amount" readonly tabindex="-1" style="font-weight: bold; color: #d63384; background: #f8f9fa;" /></td>
+        <td data-label="Đại lý"><input type="text" name="agent_${index}" list="agents_list" required placeholder="Tìm đại lý..." autocomplete="off" oninput="updateAgentInfo(this)" /></td>
+        <td data-label="CK %"><input type="number" name="discount_${index}" class="discount" readonly placeholder="0" step="0.01" tabindex="-1" style="background: #f8f9fa;" /></td>
+        <td data-label="Sản phẩm"><input type="text" name="product_${index}" list="products_list" required placeholder="Tìm sản phẩm..." autocomplete="off" oninput="updatePrice(this)" /></td>
+        <td data-label="Giá"><input type="number" name="price_${index}" class="price" readonly tabindex="-1" style="background: #f8f9fa;" /></td>
+        <td data-label="Số lượng"><input type="number" name="qty_${index}" class="qty" value="1" min="1" oninput="calcTotal(this)" /></td>
+        <td data-label="Tổng"><input type="number" name="total_${index}" class="total" readonly tabindex="-1" style="background: #f8f9fa;" /></td>
+        <td data-label="Tiền CK"><input type="number" name="discount_amount_${index}" class="discount-amount" readonly tabindex="-1" style="background: #f8f9fa;" /></td>
+        <td data-label="Thành tiền"><input type="number" name="final_amount_${index}" class="final-amount" readonly tabindex="-1" style="font-weight: bold; color: #d63384; background: #f8f9fa;" /></td>
         <td style="text-align: center; vertical-align: middle;">
             <button type="button" class="btn-remove" onclick="removeRow(this)">✕</button>
         </td>
