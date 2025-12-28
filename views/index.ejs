@@ -30,165 +30,448 @@
     <% } %>
 
     <form method="POST" action="/submit" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
-      
-      <div class="table-responsive">
-        <table id="order-table">
-          <thead>
-            <tr>
-              <th>Đại lý</th>
-              <th>CK %</th>
-              <th>Sản phẩm</th>
-              <th>Giá</th>
-              <th>Số lượng</th> <th>Tổng</th>
-              <th>Tiền CK</th>
-              <th>Thành tiền</th>
-              <th style="width: 50px;"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="entry-row" data-index="0">
-              <td data-label="Đại lý">
-                <input type="text" name="agent_0" list="agents_list" required placeholder="Tìm đại lý..." autocomplete="off" oninput="updateAgentInfo(this)"/>
-              </td>
-              <td data-label="CK %">
-                <input type="number" name="discount_0" class="discount" readonly placeholder="0" step="0.01" tabindex="-1" style="background: #f8f9fa;"/>
-              </td>
-              <td data-label="Sản phẩm">
-                <input type="text" name="product_0" list="products_list" required placeholder="Tìm sản phẩm..." autocomplete="off" oninput="updatePrice(this)" />
-              </td>
-              <td data-label="Giá"><input type="number" name="price_0" class="price" readonly tabindex="-1" style="background: #f8f9fa;"/></td>
-              
-              <td data-label="Số lượng"><input type="number" name="qty_0" inputmode="numeric" class="qty" value="1" min="1" oninput="calcTotal(this)" /></td>
-              
-              <td data-label="Tổng"><input type="number" name="total_0" class="total" readonly tabindex="-1" style="background: #f8f9fa;"/></td>
-              <td data-label="Tiền CK"><input type="number" name="discount_amount_0" class="discount-amount" readonly tabindex="-1" style="background: #f8f9fa;"/></td>
-              <td data-label="Thành tiền"><input type="number" name="final_amount_0" class="final-amount" readonly tabindex="-1" style="font-weight: bold; color: #d63384; background: #f8f9fa;" /></td>
-              <td style="text-align: center; vertical-align: middle;">
-                <button type="button" class="btn-remove" onclick="removeRow(this)" title="Xóa dòng">✕</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+      <label style="font-weight: bold; font-size: 18px;">Đại lý <span style="color:red;">*</span></label><br>
+      <input type="text" id="selected-agent" list="agents_list" required placeholder="Tìm và chọn đại lý..." autocomplete="off" oninput="updateSelectedAgent(this)" style="width: 100%; max-width: 500px; padding: 10px; font-size: 16px; margin-top: 8px;" />
+    </div>
 
-      <div class="action-bar" style="justify-content: space-between;">
-        <button type="button" class="btn-add" onclick="addRow()">+ Thêm dòng</button>
-        <button type="submit" id="submit-btn">Lưu dữ liệu</button>
-      </div>
-    </form>
+    <div class="table-responsive" style="flex: 1; overflow: auto;">
+      <table id="order-table">
+        <thead>
+          <tr>
+            <th style="width: 35%;">Sản phẩm</th>
+            <th style="width: 12%;">CK (%)</th>
+            <th>Giá</th>
+            <th>Số lượng</th>
+            <th>Tổng</th>
+            <th>Tiền CK</th>
+            <th>Thành tiền</th>
+            <th style="width: 5%;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Dòng đầu tiên -->
+          <tr class="entry-row" data-index="0">
+            <td data-label="Sản phẩm">
+              <input type="text" name="product_0" list="products_list" required placeholder="Tìm sản phẩm..." autocomplete="off" oninput="updatePrice(this)" />
+            </td>
+            <td data-label="CK (%)">
+              <input type="number" name="discount_0" class="discount" readonly value="0" step="0.01" style="background: #f8f9fa; font-weight: bold; text-align: center;" />
+            </td>
+            <td data-label="Giá">
+              <input type="number" name="price_0" class="price" readonly tabindex="-1" style="display: none;" />
+              <span class="price-display display">0</span>
+            </td>
+            <td data-label="Số lượng"><input type="number" name="qty_0" class="qty" value="1" min="1" oninput="calcTotal(this)" /></td>
+            <td data-label="Tổng">
+              <span class="total display">0</span>
+            </td>
+            <td data-label="Tiền CK">
+              <span class="discount-amount display">0</span>
+            </td>
+            <td data-label="Thành tiền">
+              <span class="final-amount display" style="font-weight: bold; color: #d63384;">0</span>
+            </td>
+            <td style="text-align: center;">
+              <button type="button" class="btn-remove" onclick="removeRow(this)">✕</button>
+            </td>
+          </tr>
+        </tbody>
+        <!-- DÒNG TỔNG KẾT -->
+        <tfoot>
+          <tr style="background: #e8f5e9; font-weight: bold; font-size: 18px; border-top: 3px solid #4caf50;">
+            <td colspan="6" style="text-align: right; padding: 15px; color: #2e7d32;">
+              TỔNG THÀNH TIỀN:
+            </td>
+            <td style="text-align: center; padding: 15px; color: #d63384; font-size: 22px; font-weight: bold;">
+              <span id="grand-final-amount">0</span> ₫
+            </td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
 
-    <datalist id="agents_list">
-      <% agents.forEach(a => { %>
-        <option value="<%= a.name %>"></option>
-      <% }) %>
-    </datalist>
+    <!-- Nút thêm dòng và submit -->
+    <div class="action-bar" style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+      <button type="button" onclick="addRow()" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold;">
+        + Thêm sản phẩm
+      </button>
+      <button type="submit" id="submit-btn" style="padding: 12px 30px; font-size: 16px;">📤 Ghi đơn hàng</button>
+    </div>
 
-    <datalist id="products_list">
-      <% products.forEach(p => { %>
-        <option value="<%= p.name %>" data-price="<%= p.price %>"></option>
-      <% }) %>
-    </datalist>
+    <!-- Hidden fields -->
+    <input type="hidden" name="selected_agent" id="form-agent" />
+    <input type="hidden" name="selected_discount_percent" id="form-discount" />
+  </form>
+
+  <datalist id="agents_list">
+    <% agents.forEach(a => { %>
+      <option value="<%= a.name %>" data-discount="<%= a.discount %>">
+    <% }) %>
+  </datalist>
+
+  <datalist id="products_list">
+    <% products.forEach(p => { %>
+      <option value="<%= p.name %>" data-price="<%= p.price %>">
+    <% }) %>
+  </datalist>
+  </div>
+
+  <!-- Popup thành công + In đơn hàng -->
+  <div class="success-popup" id="successPopup">
+    <div class="popup-content">
+      <div class="popup-icon">✓</div>
+      <div class="popup-title">Đặt hàng thành công!</div>
+      <p>Cảm ơn bạn đã nhập đơn hàng.</p>
+      <div class="popup-order-code" id="popupOrderCode">128122025</div>
+      <p>Vui lòng lưu lại mã này để tra cứu sau.</p>
+
+      <!-- Nút In đơn hàng -->
+      <button class="popup-btn" style="background: #28a745; margin-top: 15px;" onclick="printOrder()">
+        🖨️ In đơn hàng
+      </button>
+
+      <button class="popup-btn" onclick="closePopup()">Đóng</button>
+    </div>
+  </div>
+
+  <!-- Khu vực ẩn để tạo bản in đẹp -->
+  <div id="print-section" style="display: none;">
+    <h1>PHIẾU ĐƠN HÀNG ĐẠI LÝ</h1>
+
+    <table>
+      <tbody>
+        <tr class="header-info">
+          <td width="20%"><strong>Mã đơn hàng</strong></td>
+          <td width="80%" class="large bold" style="color: #d63384;" id="print-order-code">128122025</td>
+        </tr>
+        <tr class="header-info">
+          <td><strong>Tên đại lý</strong></td>
+          <td id="print-agent">Đại lý ABC</td>
+        </tr>
+        <tr class="header-info">
+          <td><strong>Chiết khấu áp dụng</strong></td>
+          <td id="print-discount">0</td>%
+        </tr>
+        <tr class="header-info">
+          <td><strong>Ngày giờ nhập</strong></td>
+          <td id="print-datetime">28/12/2025 - 14:30</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table>
+      <thead>
+        <tr>
+          <th width="5%">STT</th>
+          <th width="40%">Sản phẩm</th>
+          <th width="15%">Giá</th>
+          <th width="10%">SL</th>
+          <th width="15%">Tổng</th>
+          <th width="15%">Thành tiền</th>
+        </tr>
+      </thead>
+      <tbody id="print-table-body">
+        <!-- JS sẽ điền dữ liệu vào đây -->
+      </tbody>
+      <tfoot>
+        <tr class="highlight">
+          <td colspan="5" class="text-right bold large">TỔNG THÀNH TIỀN:</td>
+          <td class="text-right large" id="print-grand-final">0 ₫</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <table class="no-border">
+      <tr class="no-border">
+        <td class="no-border text-center" style="padding-top: 40px; color: #666;">
+          <em>Cảm ơn quý khách hàng đã tin tưởng và hợp tác!</em>
+        </td>
+      </tr>
+    </table>
   </div>
 
   <script>
     let rowCount = 1;
     let isSubmitting = false;
+    let selectedAgent = '';
+    let selectedDiscount = 0;
 
-    const agentDiscounts = new Map();
-    <% agents.forEach(a => { %>
-      agentDiscounts.set("<%= a.name.toLowerCase().trim() %>", <%= a.discount %>);
-    <% }) %>
+    function updateSelectedAgent(input) {
+      const value = input.value.trim();
+
+      // Luôn chấp nhận giá trị người dùng nhập, dù có trong danh sách hay không
+      selectedAgent = value;
+
+      // Tìm chiết khấu nếu đại lý có trong danh sách
+      const option = document.querySelector(`#agents_list option[value="${value}"]`);
+      if (option && option.dataset.discount !== undefined) {
+        selectedDiscount = parseFloat(option.dataset.discount) || 0;
+      } else {
+        // Nếu đại lý mới (không có trong danh sách) → mặc định chiết khấu = 0
+        selectedDiscount = 0;
+      }
+
+      // Cập nhật chiết khấu cho tất cả các dòng
+      document.querySelectorAll('.discount').forEach(el => {
+        el.value = selectedDiscount;
+      });
+
+      // Tính lại tất cả các dòng để cập nhật tiền CK và thành tiền
+      document.querySelectorAll('.entry-row').forEach(row => {
+        const qtyInput = row.querySelector('.qty');
+        if (qtyInput) {
+          calcTotal(qtyInput);
+        }
+      });
+
+      // Cập nhật tổng cộng
+      updateGrandTotal();
+    }
     
     const productPricesAtLoad = {};
     <% products.forEach(p => { %>
        productPricesAtLoad["<%= p.name.toLowerCase().replace(/"/g, '\\"') %>"] = <%= p.price %>;
     <% }) %>
 
-    // ... (Giữ nguyên các hàm updateAgentInfo, updatePrice, calcTotal) ...
-    function updateAgentInfo(inputElement) { /* ... code cũ ... */ 
-        const agentName = inputElement.value.trim();
-        const row = inputElement.closest('tr');
-        const discountInput = row.querySelector('.discount');
-        if (!agentName) { discountInput.value = ''; calcTotal(row.querySelector('.qty')); return; }
-        const lowerName = agentName.toLowerCase();
-        const discount = agentDiscounts.get(lowerName);
-        discountInput.value = (discount !== undefined) ? discount : '';
-        calcTotal(row.querySelector('.qty'));
+    function updatePrice(input) {
+      const value = input.value.trim();
+      const option = document.querySelector(`#products_list option[value="${value}"]`);
+      const row = input.closest('tr');
+      const priceInput = row.querySelector('.price');
+      const priceDisplay = row.querySelector('.price-display');
+
+      if (option && option.dataset.price) {
+        const price = parseFloat(option.dataset.price);
+        priceInput.value = price; // Lưu giá trị thực (không định dạng)
+        priceDisplay.textContent = price.toLocaleString('vi-VN'); // Hiển thị đẹp
+      } else {
+        priceInput.value = '';
+        priceDisplay.textContent = '0';
+      }
+
+      calcTotal(row.querySelector('.qty'));
     }
 
-    function updatePrice(inputElement) { /* ... code cũ ... */
-        const productName = inputElement.value.trim();
-        const row = inputElement.closest('tr');
-        const priceInput = row.querySelector('.price');
-        if (!productName) { priceInput.value = ''; calcTotal(row.querySelector('.qty')); return; }
-        const price = productPricesAtLoad[productName.toLowerCase()];
-        priceInput.value = price || '';
-        calcTotal(row.querySelector('.qty'));
+    function calcTotal(input) {
+      if (!input) return;
+      const row = input.closest('tr');
+      const qty = parseInt(row.querySelector('.qty').value) || 0;
+      const price = parseFloat(row.querySelector('.price').value) || 0;
+      const total = price * qty;
+      const discountAmount = total * (selectedDiscount / 100);
+      const final = total - discountAmount;
+
+      const formatNumber = (num) => num.toLocaleString('vi-VN');
+
+      row.querySelector('.total.display').textContent = formatNumber(total);
+      row.querySelector('.discount-amount.display').textContent = formatNumber(discountAmount);
+      row.querySelector('.final-amount.display').textContent = formatNumber(final);
+
+      updateGrandTotal();
     }
 
-    function calcTotal(qtyInput) { /* ... code cũ ... */
-        if (!qtyInput) return;
-        const row = qtyInput.closest('tr');
-        const price = parseFloat(row.querySelector('.price').value) || 0;
-        const qty = parseInt(qtyInput.value) || 0;
-        const total = price * qty;
-        row.querySelector('.total').value = total;
-        const discountPercent = parseFloat(row.querySelector('.discount').value) || 0;
-        const discountAmount = total * (discountPercent / 100);
-        row.querySelector('.discount-amount').value = discountAmount;
-        row.querySelector('.final-amount').value = total - discountAmount;
+    // Cập nhật tổng thành tiền toàn bộ đơn
+    function updateGrandTotal() {
+      let grandFinal = 0;
+
+      document.querySelectorAll('.entry-row').forEach(row => {
+        const finalText = row.querySelector('.final-amount.display').textContent;
+        const finalAmt = parseFloat(finalText.replace(/\./g, '')) || 0;
+        grandFinal += finalAmt;
+      });
+
+      document.getElementById('grand-final-amount').textContent = 
+        grandFinal.toLocaleString('vi-VN');
     }
 
     function addRow() {
       const tbody = document.querySelector('#order-table tbody');
-      const index = rowCount;
+      const index = rowCount++;
       const tr = document.createElement('tr');
       tr.className = 'entry-row';
       tr.dataset.index = index;
-      
-      // HTML khớp với bảng ở trên
       tr.innerHTML = `
-        <td data-label="Đại lý"><input type="text" name="agent_${index}" list="agents_list" required placeholder="Tìm đại lý..." autocomplete="off" oninput="updateAgentInfo(this)" /></td>
-        <td data-label="CK %"><input type="number" name="discount_${index}" class="discount" readonly placeholder="0" step="0.01" tabindex="-1" style="background: #f8f9fa;" /></td>
         <td data-label="Sản phẩm"><input type="text" name="product_${index}" list="products_list" required placeholder="Tìm sản phẩm..." autocomplete="off" oninput="updatePrice(this)" /></td>
-        <td data-label="Giá"><input type="number" name="price_${index}" class="price" readonly tabindex="-1" style="background: #f8f9fa;" /></td>
-        <td data-label="Số lượng"><input type="number" name="qty_${index}" class="qty" value="1" min="1" oninput="calcTotal(this)" /></td>
-        <td data-label="Tổng"><input type="number" name="total_${index}" class="total" readonly tabindex="-1" style="background: #f8f9fa;" /></td>
-        <td data-label="Tiền CK"><input type="number" name="discount_amount_${index}" class="discount-amount" readonly tabindex="-1" style="background: #f8f9fa;" /></td>
-        <td data-label="Thành tiền"><input type="number" name="final_amount_${index}" class="final-amount" readonly tabindex="-1" style="font-weight: bold; color: #d63384; background: #f8f9fa;" /></td>
-        <td style="text-align: center; vertical-align: middle;">
-            <button type="button" class="btn-remove" onclick="removeRow(this)">✕</button>
+        <td data-label="CK (%)"><input type="number" name="discount_${index}" class="discount" readonly value="${selectedDiscount || 0}" step="0.01" style="background: #f8f9fa; font-weight: bold; text-align: center;" /></td>
+        <td data-label="Giá">
+          <input type="number" name="price_${index}" class="price" readonly tabindex="-1" style="display: none;" />
+          <span class="price-display display">0</span>
         </td>
+        <td data-label="Số lượng"><input type="number" name="qty_${index}" class="qty" value="1" min="1" oninput="calcTotal(this)" /></td>
+        <td data-label="Tổng"><span class="total display">0</span></td>
+        <td data-label="Tiền CK"><span class="discount-amount display">0</span></td>
+        <td data-label="Thành tiền"><span class="final-amount display" style="font-weight: bold; color: #d63384;">0</span></td>
+        <td style="text-align: center;"><button type="button" class="btn-remove" onclick="removeRow(this)">✕</button></td>
       `;
       tbody.appendChild(tr);
-      rowCount++;
       tr.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function removeRow(btn) {
       if (document.querySelectorAll('.entry-row').length > 1) {
         btn.closest('tr').remove();
+        updateGrandTotal();
       }
     }
 
     // Submit handler giữ nguyên
     document.querySelector('form').addEventListener('submit', function(e) {
-      if (isSubmitting) { e.preventDefault(); return false; }
-      const submitBtn = document.getElementById('submit-btn');
-      
-      const rows = document.querySelectorAll('.price').forEach(input => input.readOnly = false);
-      let hasValidRow = false;
-      for (const row of rows) {
-        const agent = row.querySelector('input[name^="agent_"]').value.trim();
-        const product = row.querySelector('input[name^="product_"]').value.trim();
-        const qty = row.querySelector('input[name^="qty_"]').value;
-        if (agent && product && qty > 0) { hasValidRow = true; break; }
+      if (isSubmitting) { e.preventDefault(); return; }
+
+      if (!selectedAgent) {
+        alert('Vui lòng nhập tên đại lý!');
+        e.preventDefault();
+        return;
       }
-      if (!hasValidRow) { alert('Vui lòng nhập ít nhất một dòng hợp lệ!'); e.preventDefault(); return; }
+
+      let hasValidRow = false;
+      const products = [];
+
+      document.querySelectorAll('.entry-row').forEach(row => {
+        const product = row.querySelector('input[name^="product_"]').value.trim();
+        const qty = parseInt(row.querySelector('.qty').value) || 0;
+        const price = parseFloat(row.querySelector('.price').value) || 0;
+
+        if (product && qty > 0 && price > 0) {
+          hasValidRow = true;
+
+          const priceText = row.querySelector('.price-display')?.textContent || price.toLocaleString('vi-VN');
+          const totalText = row.querySelector('.total.display')?.textContent || '0';
+          const finalText = row.querySelector('.final-amount.display')?.textContent || '0';
+
+          products.push({
+            product,
+            price: priceText,
+            qty: qty.toString(),
+            total: totalText,
+            final: finalText
+          });
+        }
+      });
+
+      if (!hasValidRow) {
+        alert('Vui lòng nhập ít nhất một sản phẩm hợp lệ!');
+        e.preventDefault();
+        return;
+      }
+
+      // LƯU DỮ LIỆU VÀO sessionStorage TRƯỚC KHI SUBMIT
+      const tempOrderData = {
+        agent: selectedAgent,
+        discount: selectedDiscount,
+        products: products,
+        grandTotal: document.getElementById('grand-final-amount').textContent,
+        datetime: new Date().toLocaleString('vi-VN')
+      };
+      sessionStorage.setItem('tempOrderData', JSON.stringify(tempOrderData));
+
+      // Cho phép submit
+      document.getElementById('form-agent').value = selectedAgent;
+      document.getElementById('form-discount').value = selectedDiscount;
 
       isSubmitting = true;
+      const submitBtn = document.getElementById('submit-btn');
       submitBtn.disabled = true;
       submitBtn.textContent = 'Đang lưu...';
+    });
+
+    document.querySelectorAll('.entry-row').forEach(calcTotal);
+
+    // Khi trang load, kiểm tra có orderCode trong URL → hiện popup và lưu dữ liệu đơn hàng
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderCode = urlParams.get('orderCode');
+
+    if (orderCode) {
+      document.getElementById('popupOrderCode').textContent = orderCode;
+      document.getElementById('successPopup').classList.add('show');
+
+      // Lấy dữ liệu tạm đã lưu trước submit
+      const tempData = sessionStorage.getItem('tempOrderData');
+      if (tempData) {
+        const data = JSON.parse(tempData);
+        const fullOrderData = {
+          orderCode: orderCode,
+          agent: data.agent || '',
+          discount: data.discount || 0,
+          datetime: data.datetime || new Date().toLocaleString('vi-VN'),
+          products: data.products || [],
+          grandTotal: data.grandTotal || '0'
+        };
+
+        // Lưu chính thức để in
+        sessionStorage.setItem('lastOrderData', JSON.stringify(fullOrderData));
+
+        // Xóa tạm
+        sessionStorage.removeItem('tempOrderData');
+      }
+    }
+
+    // Hàm in đơn hàng - lấy dữ liệu từ sessionStorage
+    function printOrder() {
+      const savedData = sessionStorage.getItem('lastOrderData');
+      if (!savedData) {
+        alert('Không tìm thấy dữ liệu đơn hàng để in. Vui lòng thử lại.');
+        return;
+      }
+
+      const data = JSON.parse(savedData);
+
+      // Điền thông tin header
+      document.getElementById('print-order-code').textContent = data.orderCode;
+      document.getElementById('print-agent').textContent = data.agent || 'Chưa xác định';
+      document.getElementById('print-discount').textContent = data.discount;
+      document.getElementById('print-datetime').textContent = data.datetime;
+
+      // Điền bảng sản phẩm
+      const tbody = document.getElementById('print-table-body');
+      tbody.innerHTML = '';
+
+      data.products.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="text-center">${index + 1}</td>
+          <td>${item.product}</td>
+          <td class="text-right">${item.price}</td>
+          <td class="text-right">${item.qty}</td>
+          <td class="text-right">${item.total}</td>
+          <td class="text-right bold">${item.final}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Tổng thành tiền
+      document.getElementById('print-grand-final').textContent = data.grandTotal + ' ₫';
+
+      // Ẩn giao diện chính và popup
+      document.getElementById('successPopup').style.display = 'none';
+      document.querySelector('.container').style.display = 'none';
+      document.querySelector('.btn-logout-fixed').style.display = 'none';
+
+      // Hiển thị phần in
+      document.getElementById('print-section').style.display = 'block';
+
+      // In
+      window.print();
+
+      // Sau khi in xong, hiện lại giao diện
+      document.getElementById('successPopup').style.display = 'flex';
+      document.querySelector('.container').style.display = 'block';
+      document.querySelector('.btn-logout-fixed').style.display = 'block';
+      document.getElementById('print-section').style.display = 'none';
+    }
+
+    function closePopup() {
+      document.getElementById('successPopup').classList.remove('show');
+      history.replaceState(null, '', '/');
+    }
+
+    // Đóng popup khi click nền đen
+    document.getElementById('successPopup').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closePopup();
+      }
     });
   </script>
 </body>

@@ -360,4 +360,156 @@ table:not(#order-table) th { background: #e9ecef; }
         padding: 8px 15px;
         font-size: 13px;
     }
+
+    .page-header + form > div[style*="grid"] {
+        grid-template-columns: 1fr;
+    }
+    .page-header + form > div[style*="grid"] > div:last-child {
+        margin-top: 10px;
+    }
+}
+
+/* Popup thành công */
+.success-popup {
+    display: flex;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+}
+
+.success-popup.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.popup-content {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    animation: popupScale 0.4s ease-out;
+}
+
+@keyframes popupScale {
+    from { transform: scale(0.7); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.popup-icon {
+    font-size: 60px;
+    color: #28a745;
+    margin-bottom: 15px;
+}
+
+.popup-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    margin: 10px 0;
+}
+
+.popup-order-code {
+    font-size: 28px;
+    font-weight: bold;
+    color: #d63384;
+    background: #f8f9fa;
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    letter-spacing: 2px;
+}
+
+.popup-btn {
+    background: #007bff;
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.popup-btn:hover {
+    background: #0056b3;
+}
+
+@media (max-width: 768px) {
+    .popup-content { padding: 20px; }
+    .popup-order-code { font-size: 24px; }
+}
+
+.display {
+    display: block;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    text-align: right;
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 38px;
+    line-height: 1.5;
+    font-size: 15px;
+}
+
+/* Responsive: trên mobile cho dễ đọc */
+@media (max-width: 768px) {
+    .display {
+    padding: 10px 8px;
+    font-size: 14px;
+    }
+}
+
+@media print {
+body { 
+    font-family: 'Segoe UI', Arial, sans-serif; 
+    margin: 15mm; 
+    color: #000;
+}
+h1 { 
+    text-align: center; 
+    font-size: 24pt; 
+    margin-bottom: 20pt; 
+    color: #333;
+}
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin: 20px 0; 
+    font-size: 11pt;
+}
+th, td { 
+    border: 1px solid #999; 
+    padding: 10px; 
+    text-align: left; 
+    vertical-align: top;
+}
+th { 
+    background-color: #f0f0f0; 
+    font-weight: bold; 
+    text-align: center;
+}
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+.bold { font-weight: bold; }
+.large { font-size: 14pt; }
+.highlight { 
+    background-color: #e8f5e9; 
+    font-size: 14pt; 
+    font-weight: bold;
+}
+.header-info td { 
+    background-color: #f8f9fa; 
+    font-size: 12pt;
+}
+.no-border { border: none; }
 }

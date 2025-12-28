@@ -3,7 +3,6 @@ const router = express.Router();
 const { getAgents, getProducts, appendOrder, config } = require('../googleSheets');
 
 router.get('/', async (req, res) => {
-  // KIỂM TRA CẤU HÌNH
   if (!config.banggia_sheet_id || !config.daily_sheet_id || !config.ketqua_sheet_id || !Object.keys(config.service_account).length) {
     return res.redirect('/config?error=' + encodeURIComponent('Vui lòng cấu hình Google Sheets trước khi sử dụng.'));
   }
@@ -27,22 +26,27 @@ router.post('/submit', async (req, res) => {
     const lines = [];
     const userName = req.session.user?.fullName || 'Unknown';
 
-    const agentKeys = Object.keys(req.body).filter(k => k.startsWith('agent_'));
-    
-    for (const key of agentKeys) {
+    const agent = req.body.selected_agent?.trim();
+    const agentDiscount = parseFloat(req.body.selected_discount_percent) || 0;
+
+    if (!agent) {
+      throw new Error('Chưa chọn đại lý');
+    }
+
+    const productKeys = Object.keys(req.body).filter(k => k.startsWith('product_'));
+
+    for (const key of productKeys) {
       const index = key.split('_')[1];
-      const agent = req.body[`agent_${index}`]?.trim();
       const product = req.body[`product_${index}`]?.trim();
       const qty = parseInt(req.body[`qty_${index}`]) || 0;
-      const priceChot = parseFloat(req.body[`price_${index}`]) || 0;  // ← LẤY TỪ FORM
-      const agentDiscount = parseFloat(req.body[`discount_${index}`]) || 0;
+      const priceChot = parseFloat(req.body[`price_${index}`]) || 0;
 
-      if (!agent || !product || qty <= 0 || priceChot <= 0) continue;
+      if (!product || qty <= 0 || priceChot <= 0) continue;
 
       lines.push({
         agent,
         product,
-        price: priceChot,              // ← Giá chốt từ người dùng
+        price: priceChot,
         quantity: qty,
         discountPercent: agentDiscount,
         total: priceChot * qty,
@@ -52,11 +56,17 @@ router.post('/submit', async (req, res) => {
     }
 
     if (lines.length === 0) {
-      throw new Error('Không có dữ liệu hợp lệ');
+      throw new Error('Không có sản phẩm hợp lệ');
     }
 
-    await appendOrder(lines, userName);
-    res.redirect('/?success=1');
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+
+    const orderCode = await appendOrder(lines, userName);
+
+    res.redirect(`/?success=1&orderCode=${orderCode}`);
   } catch (e) {
     console.error('Lỗi submit:', e.message);
     res.redirect('/?error=' + encodeURIComponent(e.message));
