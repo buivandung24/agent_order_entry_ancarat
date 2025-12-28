@@ -1,18 +1,4 @@
 {
   "users": [
-    {
-      "id": 1,
-      "username": "ancarat_manager_2025",
-      "password": "$2b$10$o4P2w18H9RMTCz1yXu0jfOQmzJH8mujVSghYTpb5IkhwJBX1FTcUW",
-      "fullName": "admin",
-      "role": "admin"
-    },
-    {
-      "id": 2,
-      "username": "admin",
-      "password": "$2b$10$rV7ZoZlFhhMhdQ4hSyL8quMUpE/U9fubWIP.PztJIxOL5PmsCDvXG",
-      "fullName": "admin",
-      "role": "admin"
-    }
   ]
 }

@@ -513,3 +513,181 @@ th {
 }
 .no-border { border: none; }
 }
+
+
+.ts-control, .ts-dropdown {
+  font-size: 16px !important;
+}
+.ts-dropdown {
+  max-height: 300px;
+}
+
+/* ==================== TOM SELECT FIXES - QUAN TRỌNG NHẤT ==================== */
+
+/* Đảm bảo TomSelect dropdown không bị cắt khi nằm trong bảng cuộn */
+.table-responsive {
+    position: relative; /* Cần để dropdown tính vị trí đúng */
+    overflow: visible !important; /* Cho phép dropdown "tràn" ra ngoài vùng cuộn */
+}
+
+/* TomSelect wrapper phải có position relative để dropdown định vị đúng */
+.ts-wrapper {
+    position: relative !important;
+    width: 100% !important;
+}
+
+/* Dropdown của TomSelect phải thoát khỏi vùng chứa bị overflow hidden */
+.ts-dropdown {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    width: 100% !important;
+    max-height: 300px !important;
+    overflow-y: auto !important;
+    z-index: 1000 !important; /* Đảm bảo hiện trên mọi thứ */
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15) !important;
+    font-size: 15px !important;
+}
+
+/* Nội dung trong dropdown item */
+.ts-dropdown .option {
+    padding: 10px 12px !important;
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Input trong TomSelect */
+.ts-control {
+    padding: 8px 12px !important;
+    min-height: 44px !important; /* Đủ cao để chạm dễ trên mobile */
+    font-size: 15px !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+.ts-control input {
+    font-size: 15px !important;
+    height: auto !important;
+}
+
+/* Khi đang tìm kiếm - cho phép xuống dòng nếu cần */
+.ts-control .input-active {
+    width: 100% !important;
+}
+
+/* ==================== BẢNG NHẬP LIỆU - FIX Ô BỊ CẮT NỘI DUNG ==================== */
+
+#order-table tbody td {
+    padding: 6px 4px !important; /* Giảm padding để dành chỗ cho TomSelect */
+    vertical-align: top;
+    min-height: 50px; /* Đảm bảo ô đủ cao */
+    position: relative; /* Cần cho TomSelect dropdown */
+}
+
+/* Đặc biệt: ô Sản phẩm (cột rộng nhất) */
+#order-table td:nth-child(1) { /* Cột Sản phẩm */
+    min-width: 280px !important;
+    width: 35% !important;
+}
+
+/* Các cột số: căn phải, đủ rộng */
+#order-table td:nth-child(2), /* CK % */
+#order-table td:nth-child(3), /* Giá */
+#order-table td:nth-child(4), /* SL */
+#order-table td:nth-child(5), /* Tổng */
+#order-table td:nth-child(6), /* Tiền CK */
+#order-table td:nth-child(7)  /* Thành tiền */
+{
+    text-align: right;
+    min-width: 100px !important;
+    padding-right: 12px !important;
+}
+
+/* Input số trong bảng */
+#order-table input[type="number"] {
+    text-align: right;
+    padding: 10px 8px;
+    font-size: 15px;
+}
+
+/* Span hiển thị số (display) */
+.display {
+    display: block;
+    padding: 10px 12px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    text-align: right;
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 44px;
+    line-height: 1.4;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+/* ==================== RESPONSIVE MOBILE - CẢI THIỆN TOMSELECT ==================== */
+
+@media screen and (max-width: 768px) {
+    /* Trên mobile: tăng kích thước chữ và padding */
+    .ts-control, 
+    .ts-dropdown,
+    .ts-dropdown .option {
+        font-size: 16px !important;
+    }
+
+    .ts-control {
+        min-height: 48px !important;
+        padding: 12px !important;
+    }
+
+    #order-table tbody td {
+        padding: 10px 5px !important;
+        min-height: 60px !important;
+    }
+
+    /* Ô sản phẩm rộng hơn trên mobile */
+    #order-table td:nth-child(1) {
+        min-width: 100% !important;
+        width: 100% !important;
+    }
+
+    /* Các cột số vẫn căn phải */
+    #order-table td:nth-child(2),
+    #order-table td:nth-child(3),
+    #order-table td:nth-child(4),
+    #order-table td:nth-child(5),
+    #order-table td:nth-child(6),
+    #order-table td:nth-child(7) {
+        min-width: 80px !important;
+    }
+
+    .display {
+        font-size: 16px !important;
+        min-height: 48px !important;
+        padding: 12px !important;
+    }
+
+    /* Nút xóa góc trên phải */
+    .btn-remove {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: #fff0f0;
+        border: 1px solid #ffbaba;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        font-size: 16px;
+        z-index: 10;
+    }
+}
+
+/* ==================== ĐẢM BẢO DROPDOWN HIỆN TRÊN POPUP ==================== */
+
+.success-popup {
+    z-index: 2000 !important;
+}
+
+.ts-dropdown {
+    z-index: 3000 !important; /* Cao hơn popup nếu cần */
+}
