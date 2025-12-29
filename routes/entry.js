@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getAgents, getProducts, appendOrder, config } = require('../googleSheets');
+const { sendOrderToDiscord } = require('../utils/discord');
 
 router.get('/', async (req, res) => {
   if (!config.banggia_sheet_id || !config.daily_sheet_id || !config.ketqua_sheet_id || !Object.keys(config.service_account).length) {
@@ -65,6 +66,25 @@ router.post('/submit', async (req, res) => {
     const year = today.getFullYear();
 
     const orderCode = await appendOrder(lines, userName);
+
+    //discord notification
+    const vnTime = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+
+    await sendOrderToDiscord({
+      orderCode,
+      agent,
+      discountPercent: agentDiscount,
+      lines: lines.map(l => ({
+        product: l.product,
+        price: l.price,
+        quantity: l.quantity,
+        total: l.total,
+        discountAmount: l.discountAmount,
+        finalAmount: l.finalAmount
+      })),
+      userName,
+      createdAt: vnTime
+    });
 
     res.redirect(`/?success=1&orderCode=${orderCode}`);
   } catch (e) {

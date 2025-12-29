@@ -341,9 +341,9 @@ table:not(#order-table) th { background: #e9ecef; }
     #order-table td::before {
         content: attr(data-label);
         font-weight: bold;
-        flex: 0 0 35%; /* Nhãn chiếm 35% chiều rộng */
+        flex: 0 0 30%;
         text-align: left;
-        font-size: 14px;
+        font-size: 13px;
         color: #555;
     }
 
@@ -581,7 +581,9 @@ th {
   font-size: 16px !important;
 }
 .ts-dropdown {
-  max-height: 300px;
+    z-index: 9999 !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
+    border: 1px solid #ced4da !important;
 }
 
 /* ==================== TOM SELECT FIXES - QUAN TRỌNG NHẤT ==================== */
@@ -598,34 +600,25 @@ th {
     width: 100% !important;
 }
 
-/* Dropdown của TomSelect phải thoát khỏi vùng chứa bị overflow hidden */
-.ts-dropdown {
-    position: absolute !important;
-    top: 100% !important;
-    left: 0 !important;
-    width: 100% !important;
-    max-height: 300px !important;
-    overflow-y: auto !important;
-    z-index: 1000 !important; /* Đảm bảo hiện trên mọi thứ */
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15) !important;
-    font-size: 15px !important;
-}
-
 /* Nội dung trong dropdown item */
 .ts-dropdown .option {
-    padding: 10px 12px !important;
-    white-space: nowrap !important;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal !important; 
+    word-break: break-word;        
+    padding: 10px 15px !important;
+    line-height: 1.4;
+}
+
+.ts-dropdown .ts-dropdown-content {
+    max-height: 250px !important;
+    overflow-y: auto !important;
 }
 
 /* Input trong TomSelect */
 .ts-control {
-    padding: 8px 12px !important;
-    min-height: 44px !important; /* Đủ cao để chạm dễ trên mobile */
-    font-size: 15px !important;
-    border: none !important;
-    background: transparent !important;
+    min-height: 48px !important;
+    display: flex;
+    align-items: center;
+    font-size: 16px !important;
 }
 
 .ts-control input {
@@ -690,7 +683,6 @@ th {
 /* ==================== RESPONSIVE MOBILE - CẢI THIỆN TOMSELECT ==================== */
 
 @media screen and (max-width: 768px) {
-    /* Trên mobile: tăng kích thước chữ và padding */
     .ts-control, 
     .ts-dropdown,
     .ts-dropdown .option {
@@ -720,7 +712,8 @@ th {
     #order-table td:nth-child(5),
     #order-table td:nth-child(6),
     #order-table td:nth-child(7) {
-        min-width: 80px !important;
+        min-width: 0 !important;
+        width: 100% !important;
     }
 
     .display {
@@ -748,8 +741,4 @@ th {
 
 .success-popup {
     z-index: 2000 !important;
-}
-
-.ts-dropdown {
-    z-index: 3000 !important; /* Cao hơn popup nếu cần */
 }

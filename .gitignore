@@ -19,3 +19,7 @@ service_account.json
 .env 
 .env.local
 config/settings.json
+
+# Dữ liệu người dùng lưu trữ cục bộ
+/data
+/data/users.json
