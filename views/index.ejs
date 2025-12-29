@@ -5,6 +5,20 @@
   <title>Nhập Đơn Hàng Đại Lý</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="/style.css" />
+  <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+  <style>
+      /* Tùy chỉnh Tom Select cho to và rõ hơn */
+      .ts-control {
+          padding: 12px 15px !important;
+          font-size: 16px;
+          border-radius: 6px;
+          min-height: 48px;
+      }
+      .ts-dropdown { z-index: 9999; font-size: 16px; }
+      .ts-dropdown .option { padding: 10px 15px; }
+  </style>
 </head>
 <body>
   <a href="/logout" class="btn-logout-fixed">
@@ -32,7 +46,15 @@
     <form method="POST" action="/submit" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
     <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
       <label style="font-weight: bold; font-size: 18px;">Đại lý <span style="color:red;">*</span></label><br>
-      <input type="text" id="selected-agent" list="agents_list" required placeholder="Tìm và chọn đại lý..." autocomplete="off" oninput="updateSelectedAgent(this)" style="width: 100%; max-width: 500px; padding: 10px; font-size: 16px; margin-top: 8px;" />
+      
+      <div style="max-width: 500px; margin: 8px auto 0;">
+        <select id="selected-agent" required placeholder="Tìm và chọn đại lý..." autocomplete="off">
+          <option value="">Chọn đại lý...</option>
+          <% agents.forEach(a => { %>
+            <option value="<%= a.name %>" data-discount="<%= a.discount %>"><%= a.name %></option>
+          <% }) %>
+        </select>
+      </div>
     </div>
 
     <div class="table-responsive" style="flex: 1; overflow: auto;">
@@ -40,20 +62,25 @@
         <thead>
           <tr>
             <th style="width: 35%;">Sản phẩm</th>
-            <th style="width: 12%;">CK (%)</th>
-            <th>Giá</th>
-            <th>Số lượng</th>
+            <th style="width: 10%;">CK (%)</th>
+            <th style="width: 15%;">Giá</th>
+            <th style="width: 10%;">SL</th>
             <th>Tổng</th>
             <th>Tiền CK</th>
             <th>Thành tiền</th>
-            <th style="width: 5%;"></th>
+            <th>Xóa</th>
           </tr>
         </thead>
         <tbody>
           <!-- Dòng đầu tiên -->
           <tr class="entry-row" data-index="0">
             <td data-label="Sản phẩm">
-              <input type="text" name="product_0" list="products_list" required placeholder="Tìm sản phẩm..." autocomplete="off" oninput="updatePrice(this)" />
+              <select class="product-select" name="product_0" required placeholder="Tìm sản phẩm...">
+                <option value="">Chọn sản phẩm...</option>
+                <% products.forEach(p => { %>
+                  <option value="<%= p.name %>" data-price="<%= p.price %>"><%= p.name %></option>
+                <% }) %>
+              </select>
             </td>
             <td data-label="CK (%)">
               <input type="number" name="discount_0" class="discount" readonly value="0" step="0.01" style="background: #f8f9fa; font-weight: bold; text-align: center;" />
@@ -198,36 +225,76 @@
     let selectedAgent = '';
     let selectedDiscount = 0;
 
-    function updateSelectedAgent(input) {
-      const value = input.value.trim();
+    new TomSelect("#selected-agent", {
+        create: true, // Cho phép nhập đại lý mới không có trong list
+        sortField: { field: "text", direction: "asc" },
+        onChange: function(value) {
+            selectedAgent = value;
+            
+            // Tìm option tương ứng để lấy discount
+            // this.wrapper là container, ta tìm option trong instance
+            const options = this.options; 
+            const item = options[value];
+            
+            // Nếu item tồn tại trong danh sách gốc thì lấy data-discount (cần truy cập DOM hoặc data options)
+            // Cách đơn giản nhất: query selector dựa trên value vừa chọn trong thẻ select gốc (nếu chưa bị xóa)
+            // Hoặc sử dụng logic tìm trong danh sách EJS đã render
+            
+            // Logic tìm discount:
+            let foundDiscount = 0;
+            const originalOption = document.querySelector(`#selected-agent option[value="${value}"]`);
+            if (originalOption && originalOption.dataset.discount) {
+                foundDiscount = parseFloat(originalOption.dataset.discount);
+            }
+            
+            selectedDiscount = foundDiscount;
 
-      // Luôn chấp nhận giá trị người dùng nhập, dù có trong danh sách hay không
-      selectedAgent = value;
-
-      // Tìm chiết khấu nếu đại lý có trong danh sách
-      const option = document.querySelector(`#agents_list option[value="${value}"]`);
-      if (option && option.dataset.discount !== undefined) {
-        selectedDiscount = parseFloat(option.dataset.discount) || 0;
-      } else {
-        // Nếu đại lý mới (không có trong danh sách) → mặc định chiết khấu = 0
-        selectedDiscount = 0;
-      }
-
-      // Cập nhật chiết khấu cho tất cả các dòng
-      document.querySelectorAll('.discount').forEach(el => {
-        el.value = selectedDiscount;
-      });
-
-      // Tính lại tất cả các dòng để cập nhật tiền CK và thành tiền
-      document.querySelectorAll('.entry-row').forEach(row => {
-        const qtyInput = row.querySelector('.qty');
-        if (qtyInput) {
-          calcTotal(qtyInput);
+            // Cập nhật giao diện
+            document.querySelectorAll('.discount').forEach(el => el.value = selectedDiscount);
+            
+            // Tính lại tiền
+            document.querySelectorAll('.entry-row').forEach(row => {
+                const qtyInput = row.querySelector('.qty');
+                if (qtyInput) calcTotal(qtyInput);
+            });
+            updateGrandTotal();
         }
-      });
+    });
 
-      // Cập nhật tổng cộng
-      updateGrandTotal();
+    const productOptionsHTML = `
+        <option value="">Chọn sản phẩm...</option>
+        <% products.forEach(p => { %>
+            <option value="<%= p.name %>" data-price="<%= p.price %>"><%= p.name %></option>
+        <% }) %>
+    `;
+
+    function initProductSelect(selectElement) {
+        new TomSelect(selectElement, {
+            create: false, // Sản phẩm bắt buộc phải chọn trong list (hoặc true nếu bạn muốn cho nhập mới)
+            sortField: { field: "text", direction: "asc" },
+            onChange: function(value) {
+                const row = selectElement.closest('tr');
+                const priceInput = row.querySelector('.price');
+                const priceDisplay = row.querySelector('.price-display');
+                
+                // Tìm giá
+                // Chúng ta có thể dùng biến productPricesAtLoad bạn đã khai báo
+                // productPricesAtLoad map key là lowercase name
+                const key = value.toLowerCase().replace(/"/g, '\\"');
+                
+                if (productPricesAtLoad[key] !== undefined) {
+                    const price = productPricesAtLoad[key];
+                    priceInput.value = price;
+                    priceDisplay.textContent = price.toLocaleString('vi-VN');
+                } else {
+                    priceInput.value = '';
+                    priceDisplay.textContent = '0';
+                }
+                
+                // Tính lại tiền dòng này
+                calcTotal(row.querySelector('.qty'));
+            }
+        });
     }
     
     const productPricesAtLoad = {};
@@ -235,24 +302,12 @@
        productPricesAtLoad["<%= p.name.toLowerCase().replace(/"/g, '\\"') %>"] = <%= p.price %>;
     <% }) %>
 
-    function updatePrice(input) {
-      const value = input.value.trim();
-      const option = document.querySelector(`#products_list option[value="${value}"]`);
-      const row = input.closest('tr');
-      const priceInput = row.querySelector('.price');
-      const priceDisplay = row.querySelector('.price-display');
+    // Khởi tạo cho dòng đầu tiên ngay khi load trang
+    document.addEventListener('DOMContentLoaded', () => {
+        const firstSelect = document.querySelector('tr[data-index="0"] .product-select');
+        if(firstSelect) initProductSelect(firstSelect);
+    });
 
-      if (option && option.dataset.price) {
-        const price = parseFloat(option.dataset.price);
-        priceInput.value = price; // Lưu giá trị thực (không định dạng)
-        priceDisplay.textContent = price.toLocaleString('vi-VN'); // Hiển thị đẹp
-      } else {
-        priceInput.value = '';
-        priceDisplay.textContent = '0';
-      }
-
-      calcTotal(row.querySelector('.qty'));
-    }
 
     function calcTotal(input) {
       if (!input) return;
@@ -292,8 +347,14 @@
       const tr = document.createElement('tr');
       tr.className = 'entry-row';
       tr.dataset.index = index;
+      
+      // Chú ý: input name="product_..." giờ là select
       tr.innerHTML = `
-        <td data-label="Sản phẩm"><input type="text" name="product_${index}" list="products_list" required placeholder="Tìm sản phẩm..." autocomplete="off" oninput="updatePrice(this)" /></td>
+        <td data-label="Sản phẩm">
+            <select class="product-select" name="product_${index}" required placeholder="Tìm sản phẩm...">
+                ${productOptionsHTML}
+            </select>
+        </td>
         <td data-label="CK (%)"><input type="number" name="discount_${index}" class="discount" readonly value="${selectedDiscount || 0}" step="0.01" style="background: #f8f9fa; font-weight: bold; text-align: center;" /></td>
         <td data-label="Giá">
           <input type="number" name="price_${index}" class="price" readonly tabindex="-1" style="display: none;" />
@@ -306,6 +367,11 @@
         <td style="text-align: center;"><button type="button" class="btn-remove" onclick="removeRow(this)">✕</button></td>
       `;
       tbody.appendChild(tr);
+
+      // QUAN TRỌNG: Khởi tạo Tom Select cho select vừa sinh ra
+      const newSelect = tr.querySelector('.product-select');
+      initProductSelect(newSelect);
+
       tr.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
@@ -316,7 +382,7 @@
       }
     }
 
-    // Submit handler giữ nguyên
+    // Submit handler
     document.querySelector('form').addEventListener('submit', function(e) {
       if (isSubmitting) { e.preventDefault(); return; }
 
@@ -330,7 +396,9 @@
       const products = [];
 
       document.querySelectorAll('.entry-row').forEach(row => {
-        const product = row.querySelector('input[name^="product_"]').value.trim();
+        const productSelect = row.querySelector('.product-select'); 
+        const product = productSelect.value.trim();
+        
         const qty = parseInt(row.querySelector('.qty').value) || 0;
         const price = parseFloat(row.querySelector('.price').value) || 0;
 
@@ -379,7 +447,7 @@
 
     document.querySelectorAll('.entry-row').forEach(calcTotal);
 
-    // Khi trang load, kiểm tra có orderCode trong URL → hiện popup và lưu dữ liệu đơn hàng
+    // popup
     const urlParams = new URLSearchParams(window.location.search);
     const orderCode = urlParams.get('orderCode');
 

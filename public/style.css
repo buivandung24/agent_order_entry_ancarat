@@ -220,19 +220,14 @@ table:not(#order-table) th { background: #e9ecef; }
 .btn-logout-fixed {
     position: fixed;
     bottom: 20px;
-    left: 20px; /* Góc trái dưới cùng - xa nút Lưu để tránh ấn nhầm */
-    background-color: #dc3545; /* Màu đỏ cảnh báo */
+    right: 20px;
+    background: #dc3545;
     color: white;
     padding: 10px 20px;
-    border-radius: 30px; /* Bo tròn kiểu pill cho đẹp */
+    border-radius: 6px;
     text-decoration: none;
     font-weight: bold;
-    box-shadow: 0 4px 10px rgba(220, 53, 69, 0.4);
-    z-index: 1000; /* Luôn nổi trên cùng */
-    transition: transform 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 5px;
+    z-index: 1000;
 }
 
 .btn-logout-fixed:hover {
@@ -286,86 +281,161 @@ table:not(#order-table) th { background: #e9ecef; }
 }
 
 /* --- RESPONSIVE CHO ĐIỆN THOẠI (Dưới 768px) --- */
+/* ==================== TỐI ƯU TOÀN DIỆN CHO MOBILE (Dưới 768px) ==================== */
 @media screen and (max-width: 768px) {
-    body { padding: 10px; }
-    
+    body { padding: 5px; height: auto; }
+
     .container { 
-        padding: 15px; 
-        max-height: none; /* Cho phép cuộn trang tự nhiên trên mobile */
+        padding: 10px; 
+        max-width: 100% !important; 
+        width: 100%;
+        margin: 0;
+        max-height: none; /* Cho phép cuộn trang tự nhiên */
     }
 
-    #order-table thead, .admin-table thead {
-        display: none; /* Ẩn header bảng trên mobile */
-    }
-
-    #order-table tbody tr, .admin-table tbody tr {
+    /* 1. Header & Logout */
+    .page-header { flex-direction: column; align-items: center; gap: 10px; }
+    .btn-logout-fixed {
+        position: static;
         display: block;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        margin-bottom: 15px;
+        width: 100%;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+
+    /* 2. Bảng nhập liệu: Chuyển hoàn toàn sang dạng Card */
+    .table-responsive { 
+        overflow: visible; 
+        border: none; 
+        width: 100% !important;
+    }
+
+    #order-table thead { display: none; } /* Ẩn tiêu đề bảng */
+
+    #order-table tbody tr {
+        display: block;
+        width: 100% !important;
+        margin-bottom: 20px;
         padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 12px;
         background: #fff;
         position: relative;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        box-sizing: border-box; /* Đảm bảo không tràn màn hình */
     }
 
-    #order-table td, .admin-table td {
+    /* 3. Căn chỉnh từng dòng (Dùng Flexbox để chia Nhãn - Ô nhập) */
+    #order-table tbody td {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0 !important;
+        border: none !important;
+        border-bottom: 1px solid #f0f0f0 !important;
+        width: 100% !important;
+        min-height: auto !important;
+    }
+
+    /* Nhãn bên trái */
+    #order-table td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        flex: 0 0 35%; /* Nhãn chiếm 35% chiều rộng */
+        text-align: left;
+        font-size: 14px;
+        color: #555;
+    }
+
+    /* 4. Ô nhập liệu và hiển thị số bên phải */
+    #order-table input, 
+    .display, 
+    .price-display.display,
+    .ts-control {
+        flex: 1; /* Chiếm 65% diện tích còn lại */
+        width: auto !important;
+        min-height: 44px !important;
+        padding: 8px 12px !important;
+        font-size: 16px !important;
+        text-align: right !important;
+        border-radius: 8px !important;
+        background: #f8f9fa !important;
+        border: 1px solid #e0e0e0 !important;
+        margin: 0;
+        box-sizing: border-box;
+    }
+
+    /* Tối ưu riêng cho TomSelect trên mobile */
+    .ts-control { display: flex !important; align-items: center; justify-content: flex-end; }
+
+    /* 5. Fix Background hiển thị số tiền */
+    /* Màu nền xám nhẹ cho Giá, CK, SL để dễ nhìn */
+    .display { background: #f8f9fa !important; color: #333 !important; }
+
+    /* Màu hồng cho các cột kết quả (Tổng, Tiền CK, Thành tiền) */
+    #order-table td[data-label="Thành tiền"] .display,
+    #order-table td[data-label="Tiền CK"] .display,
+    #order-table td[data-label="Tổng"] .display,
+    .final-amount.display {
+        background: #fff0f6 !important; 
+        color: #d63384 !important;
+        border: 1px solid #ffadd2 !important;
+        font-weight: bold !important;
+    }
+
+    /* 6. Nút Xóa (Ghim vào góc card) */
+    .btn-remove {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #ff4d4f !important;
+        color: #fff !important;
+        width: 30px !important;
+        height: 30px !important;
+        border-radius: 50% !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    /* 7. Phần Tổng cộng cuối bảng (Footer) */
+    #order-table tfoot td {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border: none !important;
-        padding: 8px 5px !important;
-        text-align: right;
+        width: 100%;
+        padding: 20px 10px !important;
+        background: #fff;
+        border-radius: 10px;
+        margin-top: 10px;
     }
 
-    /* Tạo nhãn giả từ thuộc tính data-label hoặc text nội dung */
-    #order-table td::before, .admin-table td::before {
-        content: attr(data-label);
-        font-weight: bold;
-        text-align: left;
-        flex: 1;
-        font-size: 13px;
-        color: #666;
+    #grand-final-amount {
+        font-size: 26px !important;
+        color: #d63384 !important;
+        font-weight: 800;
     }
 
-    #order-table input, #order-table td input {
-        width: 60% !important;
-        border: 1px solid #eee !important;
-        border-radius: 4px;
-        background: #fdfdfd !important;
-    }
-
-    .btn-remove {
-        position: absolute;
-        top: 5px;
-        right: 5px;
-        background: #fff0f0;
-    }
-
+    /* 8. Action Bar (Nút thêm, Nút Gửi đơn) */
     .action-bar {
         position: sticky;
         bottom: 0;
-        background: white;
-        padding: 15px 0;
+        background: #fff;
+        padding: 15px;
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
+        margin: 15px -10px -10px -10px;
+        box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+        z-index: 100;
     }
 
     .action-bar button {
         width: 100%;
-        height: 45px;
-    }
-
-    .btn-logout-fixed {
-        bottom: 80px; /* Đẩy lên cao để không che khuất các nút khác */
-        padding: 8px 15px;
-        font-size: 13px;
-    }
-
-    .page-header + form > div[style*="grid"] {
-        grid-template-columns: 1fr;
-    }
-    .page-header + form > div[style*="grid"] > div:last-child {
-        margin-top: 10px;
+        height: 55px;
+        font-size: 18px;
+        border-radius: 12px;
     }
 }
 
@@ -461,14 +531,6 @@ table:not(#order-table) th { background: #e9ecef; }
     font-size: 15px;
 }
 
-/* Responsive: trên mobile cho dễ đọc */
-@media (max-width: 768px) {
-    .display {
-    padding: 10px 8px;
-    font-size: 14px;
-    }
-}
-
 @media print {
 body { 
     font-family: 'Segoe UI', Arial, sans-serif; 
@@ -526,8 +588,8 @@ th {
 
 /* Đảm bảo TomSelect dropdown không bị cắt khi nằm trong bảng cuộn */
 .table-responsive {
-    position: relative; /* Cần để dropdown tính vị trí đúng */
-    overflow: visible !important; /* Cho phép dropdown "tràn" ra ngoài vùng cuộn */
+    overflow-x: auto; /* Cho phép scroll ngang trên mobile */
+    -webkit-overflow-scrolling: touch; /* Mượt mà trên iOS */
 }
 
 /* TomSelect wrapper phải có position relative để dropdown định vị đúng */
