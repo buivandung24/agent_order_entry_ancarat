@@ -2,11 +2,32 @@ const express = require('express');
 const router = express.Router();
 const { getAgents, getProducts, appendOrder, config } = require('../googleSheets');
 const { sendOrderToDiscord } = require('../utils/discord');
+const path = require('path');
+const fs = require('fs');
+const SESSION_CONFIG_PATH = path.join(__dirname, '../config/sessionConfig.json');
+
+function getSessionMinutes() {
+  try {
+    if (fs.existsSync(SESSION_CONFIG_PATH)) {
+      const data = JSON.parse(fs.readFileSync(SESSION_CONFIG_PATH, 'utf8'));
+      return data.minutes || 5;
+    }
+  } catch (e) {
+    console.error('Lỗi đọc session config:', e.message);
+  }
+  return 5;
+}
 
 router.get('/', async (req, res) => {
   if (!config.banggia_sheet_id || !config.daily_sheet_id || !config.ketqua_sheet_id || !Object.keys(config.service_account).length) {
     return res.redirect('/config?error=' + encodeURIComponent('Vui lòng cấu hình Google Sheets trước khi sử dụng.'));
   }
+
+  const sessionMinutes = getSessionMinutes();
+
+  const endTime = new Date(Date.now() + sessionMinutes * 60 * 1000);
+  req.session.sessionEndTime = endTime.toISOString();
+  req.session.sessionMinutes = sessionMinutes;
 
   try {
     const [agents, products] = await Promise.all([getAgents(), getProducts()]);
@@ -14,7 +35,9 @@ router.get('/', async (req, res) => {
       agents, 
       products, 
       success: req.query.success,
-      error: req.query.error 
+      error: req.query.error,
+      sessionMinutes: req.session.sessionMinutes || sessionMinutes,
+      sessionEndTime: req.session.sessionEndTime
     });
   } catch (e) {
     console.error('Lỗi load trang nhập đơn:', e.message);

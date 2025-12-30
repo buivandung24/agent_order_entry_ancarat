@@ -25,7 +25,7 @@ function buildItemsTable(items) {
     const name = (i.product || '').padEnd(32).slice(0, 32);
     const price = formatVND(i.price).padStart(12);
     const qty = String(i.quantity || 0).padStart(4);
-    const final = formatVND(i.finalAmount).padStart(14);
+    const final = formatVND(i.finalAmount).padStart(14); 
     return `${name} | ${price} | ${qty} | ${final}`;
   });
 

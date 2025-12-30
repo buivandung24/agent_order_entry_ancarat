@@ -7,18 +7,6 @@
   <link rel="stylesheet" href="/style.css" />
   <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
-
-  <style>
-      /* Tùy chỉnh Tom Select cho to và rõ hơn */
-      .ts-control {
-          padding: 12px 15px !important;
-          font-size: 16px;
-          border-radius: 6px;
-          min-height: 48px;
-      }
-      .ts-dropdown { z-index: 9999; font-size: 16px; }
-      .ts-dropdown .option { padding: 10px 15px; }
-  </style>
 </head>
 <body>
   <a href="/logout" class="btn-logout-fixed">
@@ -219,7 +207,30 @@
     </table>
   </div>
 
+  <div id="session-timer" style="position: fixed; top: 20px; right: 20px; background: #ff4444; color: white; padding: 10px 16px; border-radius: 8px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 9998; display: none;">
+    Phiên hết hạn sau: <span id="timer-display">00:00</span>
+  </div>
+
+  <!-- Popup hết hạn -->
+  <div id="session-expired-popup" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+      <h3 style="color: #d32f2f; margin-top: 0;">⏰ Phiên nhập đơn đã hết hạn!</h3>
+      <p>Để đảm bảo giá sản phẩm chính xác, hệ thống yêu cầu cập nhật lại bảng giá.</p>
+      <p><strong>Dữ liệu bạn đã nhập sẽ được giữ nguyên.</strong></p>
+      <button onclick="refreshPrices()" style="padding: 12px 24px; background: #1976d2; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer;">
+        OK - Cập nhật giá mới
+      </button>
+    </div>
+  </div>
+
   <script>
+    // Cấu hình thời gian phiên
+    const SESSION_MINUTES = <%= sessionMinutes %>;
+    const SERVER_END_TIME = new Date('<%= sessionEndTime %>').getTime();
+
+    let sessionEndTime = SERVER_END_TIME;
+    let timerInterval = null;
+
     let rowCount = 1;
     let isSubmitting = false;
     let selectedAgent = '';
@@ -227,18 +238,13 @@
 
     new TomSelect("#selected-agent", {
         create: true, // Cho phép nhập đại lý mới không có trong list
+        dropdownParent: 'body',
         sortField: { field: "text", direction: "asc" },
         onChange: function(value) {
             selectedAgent = value;
-            
-            // Tìm option tương ứng để lấy discount
-            // this.wrapper là container, ta tìm option trong instance
+
             const options = this.options; 
             const item = options[value];
-            
-            // Nếu item tồn tại trong danh sách gốc thì lấy data-discount (cần truy cập DOM hoặc data options)
-            // Cách đơn giản nhất: query selector dựa trên value vừa chọn trong thẻ select gốc (nếu chưa bị xóa)
-            // Hoặc sử dụng logic tìm trong danh sách EJS đã render
             
             // Logic tìm discount:
             let foundDiscount = 0;
@@ -270,16 +276,14 @@
 
     function initProductSelect(selectElement) {
         new TomSelect(selectElement, {
-            create: false, // Sản phẩm bắt buộc phải chọn trong list (hoặc true nếu bạn muốn cho nhập mới)
+            create: false,
             sortField: { field: "text", direction: "asc" },
+            dropdownParent: 'body',
             onChange: function(value) {
                 const row = selectElement.closest('tr');
                 const priceInput = row.querySelector('.price');
                 const priceDisplay = row.querySelector('.price-display');
-                
-                // Tìm giá
-                // Chúng ta có thể dùng biến productPricesAtLoad bạn đã khai báo
-                // productPricesAtLoad map key là lowercase name
+
                 const key = value.toLowerCase().replace(/"/g, '\\"');
                 
                 if (productPricesAtLoad[key] !== undefined) {
@@ -306,8 +310,110 @@
     document.addEventListener('DOMContentLoaded', () => {
         const firstSelect = document.querySelector('tr[data-index="0"] .product-select');
         if(firstSelect) initProductSelect(firstSelect);
+
+        startTimer();
     });
 
+        function startTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+
+      const timerDisplay = document.getElementById('timer-display');
+      const timerBox = document.getElementById('session-timer');
+
+      function update() {
+        const now = Date.now();
+        const diff = sessionEndTime - now;
+
+        if (diff <= 0) {
+          timerBox.style.display = 'none';
+          document.getElementById('session-expired-popup').style.display = 'flex';
+          return;
+        }
+
+        const minutes = Math.floor(diff / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+        timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+        if (diff <= 5 * 60 * 1000) {
+          timerBox.style.background = '#d32f2f';
+          timerBox.style.animation = 'pulse 1s infinite';
+        } else {
+          timerBox.style.background = '#ff4444';
+          timerBox.style.animation = 'none';
+        }
+
+        timerBox.style.display = 'block';
+      }
+
+      // CHỈ setInterval, KHÔNG gọi update() ngay
+      timerInterval = setInterval(update, 1000);
+
+      // Thay vào đó, gọi update SAU 300ms để tránh race condition
+      setTimeout(update, 300);
+    }
+    
+    async function refreshPrices() {
+      try {
+        document.getElementById('session-expired-popup').style.display = 'none';
+
+        // 1. Cập nhật sản phẩm mới
+        const response = await fetch('/api/products');
+        if (!response.ok) throw new Error('Không thể kết nối API sản phẩm');
+        const newProducts = await response.json();
+
+        const newPriceMap = {};
+        newProducts.forEach(p => {
+          newPriceMap[p.name.trim()] = p.price;
+        });
+
+        document.querySelectorAll('.product-select').forEach(select => {
+          const ts = select.tomselect;
+          if (!ts) return;
+
+          const currentValue = ts.getValue();
+
+          ts.clearOptions();
+          newProducts.forEach(p => {
+            const name = p.name.trim();
+            ts.addOption({ value: name, text: name });
+          });
+
+          if (currentValue && newPriceMap[currentValue.trim()]) {
+            ts.setValue(currentValue.trim(), true);
+          }
+
+          ts.refreshOptions(false);
+        });
+
+        document.querySelectorAll('.entry-row').forEach(row => {
+          const productSelect = row.querySelector('.product-select');
+          const selectedProduct = productSelect?.tomselect?.getValue()?.trim();
+
+          if (selectedProduct && newPriceMap[selectedProduct] !== undefined) {
+            const newPrice = newPriceMap[selectedProduct];
+            row.querySelector('.price').value = newPrice;
+            row.querySelector('.price-display').textContent = newPrice.toLocaleString('vi-VN');
+            calcTotal(row.querySelector('.qty'));
+          }
+        });
+
+        // 2. Gia hạn phiên
+        const resetRes = await fetch('/api/reset-session', { method: 'POST' });
+        if (!resetRes.ok) throw new Error('Không thể gia hạn phiên');
+
+        const resetData = await resetRes.json();
+        sessionEndTime = new Date(resetData.sessionEndTime).getTime();
+
+        // 3. Tạo lại timer mới (clear cũ, dùng sessionEndTime mới)
+        startTimer();
+      } catch (err) {
+        console.error('Lỗi refreshPrices:', err);
+        alert('❌ Lỗi: ' + err.message + '\nVui lòng tải lại trang (F5).');
+      }
+    }
 
     function calcTotal(input) {
       if (!input) return;

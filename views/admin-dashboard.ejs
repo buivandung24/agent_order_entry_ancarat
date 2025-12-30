@@ -11,7 +11,7 @@
 
   <div class="container">
     <div class="page-header">
-      <h1>Quản lý tài khoản người dùng</h1>
+      <h1>Quản lý hệ thống</h1>
       <a href="/" style="text-decoration: none; color: #007bff; font-weight: bold;">← Về trang nhập đơn</a>
     </div>
 
@@ -22,7 +22,23 @@
       <div ><%= error_msg %></div>
     <% } %>
 
-    <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+    <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 10px;">
+      <h2 style="margin-top: 0;">Cấu hình thời gian phiên nhập đơn</h2>
+      <form method="POST" action="/admin/set-session-time">
+        <div style="display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;">
+          <div>
+            <label style="display:block; font-size: 14px; margin-bottom: 5px;">
+              Thời gian tối đa mỗi phiên (phút) <span style="color:red;">*</span>
+            </label>
+            <input type="number" name="sessionMinutes" min="1" max="120" value="<%= typeof sessionConfig !== 'undefined' ? sessionConfig.minutes : 30 %>" 
+                  style="width:100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" required />
+          </div>
+          <button type="submit" style="height: 46px; padding: 0 20px;">Lưu cấu hình</button>
+        </div>
+      </form>
+    </div>
+
+    <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 10px;">
         <h2 style="margin-top: 0;">Thêm người dùng mới</h2>
         <form method="POST" action="/admin/add">
           <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end;">
@@ -81,5 +97,7 @@
       </table>
     </div>
   </div>
+
+  
 </body>
 </html>

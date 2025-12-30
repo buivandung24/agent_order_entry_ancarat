@@ -590,8 +590,8 @@ th {
 
 /* Đảm bảo TomSelect dropdown không bị cắt khi nằm trong bảng cuộn */
 .table-responsive {
-    overflow-x: auto; /* Cho phép scroll ngang trên mobile */
-    -webkit-overflow-scrolling: touch; /* Mượt mà trên iOS */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* TomSelect wrapper phải có position relative để dropdown định vị đúng */
