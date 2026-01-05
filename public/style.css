@@ -103,13 +103,18 @@ h2 { color: #495057; border-bottom: 2px solid #eee; padding-bottom: 10px; }
 }
 
 /* CẤU HÌNH ĐỘ RỘNG CỘT - GIẢI QUYẾT TÊN DÀI */
-#order-table th:nth-child(1), #order-table td:nth-child(1) { min-width: 220px; width: 20%; } /* Đại lý */
-#order-table th:nth-child(3), #order-table td:nth-child(3) { min-width: 350px; width: 30%; } /* Sản phẩm - Rất rộng */
-#order-table th:nth-child(2) { min-width: 80px; } /* CK */
+#order-table th:nth-child(1), #order-table td:nth-child(1) { min-width: 220px; width: 20%; text-align: center; } /* Đại lý */
+#order-table th:nth-child(2) { min-width: 80px; text-align: center; } /* CK */
+#order-table th:nth-child(3), 
+#order-table td:nth-child(3),
 #order-table th:nth-child(4), 
+#order-table th:nth-child(5), 
 #order-table th:nth-child(6), 
 #order-table th:nth-child(7), 
-#order-table th:nth-child(8) { min-width: 120px; text-align: right; } /* Các cột tiền */
+#order-table th:nth-child(8) { min-width: 120px; text-align: center; } /* Các cột tiền */
+#order-table td:nth-child(8) {
+  min-width: 200px !important;
+}
 
 /* Input trong bảng: Tràn viền, nhìn sạch sẽ */
 #order-table input { 
@@ -181,25 +186,6 @@ table:not(#order-table) th, table:not(#order-table) td { padding: 10px; border: 
 table:not(#order-table) th { background: #e9ecef; }
 
 /* --- GIỮ LẠI CÁC STYLE CŨ VÀ CẬP NHẬT CÁC PHẦN SAU --- */
-
-/* 1. Cấu hình lại độ rộng cột trong bảng */
-#order-table th:nth-child(1), #order-table td:nth-child(1) { min-width: 220px; width: 20%; } /* Đại lý */
-#order-table th:nth-child(3), #order-table td:nth-child(3) { min-width: 350px; width: 30%; } /* Sản phẩm */
-
-/* CỘT SỐ LƯỢNG (Cột 5) - SỬA Ở ĐÂY: Tăng độ rộng để không che số */
-#order-table th:nth-child(5), #order-table td:nth-child(5) { 
-    min-width: 100px; /* Đủ rộng cho số > 100 */
-    text-align: right;
-}
-
-/* Các cột tiền khác */
-#order-table th:nth-child(4), /* Giá */
-#order-table th:nth-child(6), /* Tổng */
-#order-table th:nth-child(7), /* Tiền CK */
-#order-table th:nth-child(8) { /* Thành tiền */
-    min-width: 120px; 
-    text-align: right; 
-}
 
 /* 2. Header chứa Tiêu đề và Nút Admin */
 .page-header {
@@ -381,6 +367,10 @@ table:not(#order-table) th { background: #e9ecef; }
         color: #d63384 !important;
         border: 1px solid #ffadd2 !important;
         font-weight: bold !important;
+    }
+
+    .note-textarea {
+        min-height: 60px;
     }
 
     /* 6. Nút Xóa (Ghim vào góc card) */
@@ -741,4 +731,27 @@ th {
 
 .success-popup {
     z-index: 2000 !important;
+}
+
+.note-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 15px;
+}
+
+
+
+.note-textarea {
+  width: 100%;
+  min-height: 40px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 15px;
+  resize: vertical;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: hidden;
 }

@@ -64,6 +64,7 @@ router.post('/submit', async (req, res) => {
       const product = req.body[`product_${index}`]?.trim();
       const qty = parseInt(req.body[`qty_${index}`]) || 0;
       const priceChot = parseFloat(req.body[`price_${index}`]) || 0;
+      const note = req.body[`note_${index}`]?.trim() || '';
 
       if (!product || qty <= 0 || priceChot <= 0) continue;
 
@@ -75,7 +76,8 @@ router.post('/submit', async (req, res) => {
         discountPercent: agentDiscount,
         total: priceChot * qty,
         discountAmount: (priceChot * qty) * (agentDiscount / 100),
-        finalAmount: (priceChot * qty) * (1 - agentDiscount / 100)
+        finalAmount: (priceChot * qty) * (1 - agentDiscount / 100),
+        note
       });
     }
 
@@ -103,7 +105,8 @@ router.post('/submit', async (req, res) => {
         quantity: l.quantity,
         total: l.total,
         discountAmount: l.discountAmount,
-        finalAmount: l.finalAmount
+        finalAmount: l.finalAmount,
+        note: l.note || ''
       })),
       userName,
       createdAt: vnTime

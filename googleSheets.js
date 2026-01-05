@@ -100,7 +100,7 @@ async function ensureTodaySheet() {
 
     await sheets.spreadsheets.values.update({
       spreadsheetId: config.ketqua_sheet_id,
-      range: `${title}!A1:O1`,
+      range: `${title}!A1:P1`,
       valueInputOption: 'USER_ENTERED',
       requestBody: {
         values: [[
@@ -118,7 +118,8 @@ async function ensureTodaySheet() {
           'Tiền CK (Giá hiện tại)',
           'Thành tiền (Giá hiện tại)',
           'Người nhập',
-          'Thời gian'
+          'Thời gian',
+          'Ghi chú'
         ]]
       }
     });
@@ -259,13 +260,14 @@ async function appendOrder(lines, userName) {
       discountAmountNew,
       finalNew,
       userName,
-      timeStr
+      timeStr,
+      line.note || ''
     ];
   });
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: config.ketqua_sheet_id,
-    range: `${title}!A:O`,
+    range: `${title}!A:P`,
     valueInputOption: 'USER_ENTERED',
     insertDataOption: 'INSERT_ROWS',
     requestBody: { values }

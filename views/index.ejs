@@ -51,11 +51,12 @@
           <tr>
             <th style="width: 35%;">Sản phẩm</th>
             <th style="width: 10%;">CK (%)</th>
-            <th style="width: 15%;">Giá</th>
+            <th>Giá</th>
             <th style="width: 10%;">SL</th>
             <th>Tổng</th>
             <th>Tiền CK</th>
             <th>Thành tiền</th>
+            <th>Ghi chú</th>
             <th>Xóa</th>
           </tr>
         </thead>
@@ -86,6 +87,9 @@
             </td>
             <td data-label="Thành tiền">
               <span class="final-amount display" style="font-weight: bold; color: #d63384;">0</span>
+            </td>
+            <td data-label="Ghi chú">
+              <textarea name="note_0" class="note-textarea" placeholder="Ghi chú (tùy chọn)" rows="2"></textarea>  <!-- THAY INPUT THÀNH TEXTAREA, thêm rows=2 để mặc định 2 dòng -->
             </td>
             <td style="text-align: center;">
               <button type="button" class="btn-remove" onclick="removeRow(this)">✕</button>
@@ -237,7 +241,7 @@
     let selectedDiscount = 0;
 
     new TomSelect("#selected-agent", {
-        create: true, // Cho phép nhập đại lý mới không có trong list
+        create: true,
         dropdownParent: 'body',
         sortField: { field: "text", direction: "asc" },
         onChange: function(value) {
@@ -447,6 +451,16 @@
         grandFinal.toLocaleString('vi-VN');
     }
 
+    function autoResizeTextarea(textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = textarea.scrollHeight + 'px';
+    }
+
+    document.querySelectorAll('.note-textarea').forEach(textarea => {
+      textarea.addEventListener('input', () => autoResizeTextarea(textarea));
+      autoResizeTextarea(textarea);
+    });
+
     function addRow() {
       const tbody = document.querySelector('#order-table tbody');
       const index = rowCount++;
@@ -470,6 +484,9 @@
         <td data-label="Tổng"><span class="total display">0</span></td>
         <td data-label="Tiền CK"><span class="discount-amount display">0</span></td>
         <td data-label="Thành tiền"><span class="final-amount display" style="font-weight: bold; color: #d63384;">0</span></td>
+        <td data-label="Ghi chú">
+          <textarea name="note_${index}" class="note-textarea" placeholder="Ghi chú (tùy chọn)" rows="2"></textarea>
+        </td>
         <td style="text-align: center;"><button type="button" class="btn-remove" onclick="removeRow(this)">✕</button></td>
       `;
       tbody.appendChild(tr);
@@ -479,6 +496,10 @@
       initProductSelect(newSelect);
 
       tr.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      const newTextarea = tr.querySelector('.note-textarea');
+      newTextarea.addEventListener('input', () => autoResizeTextarea(newTextarea));
+      autoResizeTextarea(newTextarea);
     }
 
     function removeRow(btn) {

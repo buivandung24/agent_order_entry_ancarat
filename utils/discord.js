@@ -1,4 +1,3 @@
-// utils/discord.js
 const axios = require('axios');
 
 const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
@@ -71,7 +70,7 @@ async function sendOrderToDiscord(orderData) {
             inline: true
           },
           {
-            name: "🏪 Đại lý",
+            name: "🏪 Người Mua",
             value: safeText(agent),
             inline: true
           },
@@ -83,6 +82,11 @@ async function sendOrderToDiscord(orderData) {
           {
             name: "📦 Chi tiết sản phẩm",
             value: buildItemsTable(lines),
+            inline: false
+          },
+          {
+            name: "📝 Ghi chú sản phẩm",
+            value: lines.map(i => `**${i.product}**: ${safeText(i.note, 'Không có')}`).join('\n'),
             inline: false
           },
           {
