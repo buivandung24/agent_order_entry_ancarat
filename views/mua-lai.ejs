@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <title>Nhập Đơn Mua Hàng Lại Từ Khách Hàng</title>
+  <title>Nhập Đơn Mua Lại</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="/style.css" />
   <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
@@ -15,15 +15,16 @@
 
   <div class="container">
     <div class="page-header">
-      <h1>Nhập Đơn Mua Hàng Lại Từ Khách Hàng</h1>
-      <a href="/" class="button" style="background: #00ff99; color: white; padding: 8px 16px; text-decoration: none; border-radius: 6px; font-weight: 500;">
-        Nhập đơn hàng mới
+      <h1>Nhập Đơn Mua Lại</h1>
+      <a href="/" class="button" style="background: #02ed8fff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 6px; font-weight: 500;">
+        Nhập đơn hàng bán đi
       </a>
       <% if (user && user.role === 'admin') { %>
         <a href="/admin" class="btn-config" style="background: #6c757d; color: white; padding: 8px 16px; text-decoration: none; border-radius: 6px; font-weight: 500;">
           ⚙ Quản lý hệ thống
         </a>
       <% } %>
+      
     </div>
 
     <% if (locals.success) { %>
@@ -35,12 +36,16 @@
 
     <form method="POST" action="/mua-lai/submit" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
     <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
-        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
-            <label style="font-weight: bold; font-size: 18px;">Tên khách hàng <span style="color:red;">*</span></label><br>
-            <div style="max-width: 500px; margin: 8px auto 0;">
-                <input type="text" id="selected-agent" name="selected_agent" required placeholder="Nhập tên khách hàng..." style="width:100%; padding:10px;" />
-            </div>
-        </div>
+      <label style="font-weight: bold; font-size: 18px;">Đại lý <span style="color:red;">*</span></label><br>
+      
+      <div style="max-width: 500px; margin: 8px auto 0;">
+        <select id="selected-agent" required placeholder="Tìm và chọn đại lý..." autocomplete="off">
+          <option value="">Chọn đại lý...</option>
+          <% agents.forEach(a => { %>
+            <option value="<%= a.name %>" data-discount="<%= a.buyDiscount %>"><%= a.name %></option>
+          <% }) %>
+        </select>
+      </div>
     </div>
 
     <div class="table-responsive" style="flex: 1; overflow: auto;">
@@ -65,13 +70,12 @@
               <select class="product-select" name="product_0" required placeholder="Tìm sản phẩm...">
                 <option value="">Chọn sản phẩm...</option>
                 <% products.forEach(p => { %>
-                  <option value="<%= p.name %>" data-price="<%= p.price %>"><%= p.name %></option>
+                  <option value="<%= p.name %>" data-price="<%= p.buyPrice %>"><%= p.name %></option>
                 <% }) %>
               </select>
             </td>
             <td data-label="CK (%)">
-                <input type="hidden" name="selected_discount_percent" value="0.5" />
-                <span class="discount display" style="font-weight: bold; text-align: center;">0.5</span>
+              <input type="number" name="discount_0" class="discount" readonly value="0" step="0.01" style="background: #f8f9fa; font-weight: bold; text-align: center;" />
             </td>
             <td data-label="Giá">
               <input type="number" name="price_0" class="price" readonly tabindex="-1" style="display: none;" />
@@ -117,7 +121,17 @@
       </button>
       <button type="submit" id="submit-btn" style="padding: 12px 30px; font-size: 16px;">📤 Ghi đơn hàng</button>
     </div>
+
+    <!-- Hidden fields -->
+    <input type="hidden" name="selected_agent" id="form-agent" />
+    <input type="hidden" name="selected_discount_percent" id="form-discount" />
   </form>
+
+  <datalist id="agents_list">
+    <% agents.forEach(a => { %>
+      <option value="<%= a.name %>" data-discount="<%= a.discount %>">
+    <% }) %>
+  </datalist>
 
   <datalist id="products_list">
     <% products.forEach(p => { %>
@@ -130,7 +144,7 @@
   <div class="success-popup" id="successPopup">
     <div class="popup-content">
       <div class="popup-icon">✓</div>
-      <div class="popup-title">Nhập đơn mua lại thành công!</div>
+      <div class="popup-title">Mua hàng lại thành công!</div>
       <p>Cảm ơn bạn đã nhập đơn hàng.</p>
       <div class="popup-order-code" id="popupOrderCode">128122025</div>
       <p>Vui lòng lưu lại mã này để tra cứu sau.</p>
@@ -155,7 +169,7 @@
           <td width="80%" class="large bold" style="color: #d63384;" id="print-order-code">128122025</td>
         </tr>
         <tr class="header-info">
-          <td><strong>Tên khách hàng</strong></td>
+          <td><strong>Tên đại lý</strong></td>
           <td id="print-agent">Đại lý ABC</td>
         </tr>
         <tr class="header-info">
@@ -227,16 +241,43 @@
     let rowCount = 1;
     let isSubmitting = false;
     let selectedAgent = '';
-    let selectedDiscount = 0.5;
+    let selectedDiscount = 0;
 
-    document.getElementById('selected-agent').addEventListener('input', function() {
-        selectedAgent = this.value.trim();
+    new TomSelect("#selected-agent", {
+        create: true,
+        dropdownParent: 'body',
+        sortField: { field: "text", direction: "asc" },
+        onChange: function(value) {
+            selectedAgent = value;
+
+            const options = this.options; 
+            const item = options[value];
+            
+            // Logic tìm discount:
+            let foundDiscount = 0;
+            const originalOption = document.querySelector(`#selected-agent option[value="${value}"]`);
+            if (originalOption && originalOption.dataset.discount) {
+                foundDiscount = parseFloat(originalOption.dataset.discount);
+            }
+            
+            selectedDiscount = foundDiscount;
+
+            // Cập nhật giao diện
+            document.querySelectorAll('.discount').forEach(el => el.value = selectedDiscount);
+            
+            // Tính lại tiền
+            document.querySelectorAll('.entry-row').forEach(row => {
+                const qtyInput = row.querySelector('.qty');
+                if (qtyInput) calcTotal(qtyInput);
+            });
+            updateGrandTotal();
+        }
     });
 
     const productOptionsHTML = `
         <option value="">Chọn sản phẩm...</option>
         <% products.forEach(p => { %>
-            <option value="<%= p.name %>" data-price="<%= p.price %>"><%= p.name %></option>
+            <option value="<%= p.name %>" data-price="<%= p.buyPrice %>"><%= p.name %></option>
         <% }) %>
     `;
 
@@ -332,7 +373,7 @@
 
         const newPriceMap = {};
         newProducts.forEach(p => {
-          newPriceMap[p.name.trim()] = p.price;
+          newPriceMap[p.name.trim()] = p.buyPrice;
         });
 
         document.querySelectorAll('.product-select').forEach(select => {
@@ -373,7 +414,7 @@
         const resetData = await resetRes.json();
         sessionEndTime = new Date(resetData.sessionEndTime).getTime();
 
-        // 3. Tạo lại timer mới (clear cũ, dùng sessionEndTime mới)
+        // 3. Tạo lại timer mới
         startTimer();
       } catch (err) {
         console.error('Lỗi refreshPrices:', err);
@@ -437,10 +478,7 @@
                 ${productOptionsHTML}
             </select>
         </td>
-        <td data-label="CK (%)">
-            <input type="hidden" name="selected_discount_percent" value="0.5" />
-            <span class="discount display" style="font-weight: bold; text-align: center;">0.5</span>
-        </td>
+        <td data-label="CK (%)"><input type="number" name="discount_${index}" class="discount" readonly value="${selectedDiscount || 0}" step="0.01" style="background: #f8f9fa; font-weight: bold; text-align: center;" /></td>
         <td data-label="Giá">
           <input type="number" name="price_${index}" class="price" readonly tabindex="-1" style="display: none;" />
           <span class="price-display display">0</span>
@@ -479,7 +517,7 @@
       if (isSubmitting) { e.preventDefault(); return; }
 
       if (!selectedAgent) {
-        alert('Vui lòng nhập Tên khách hàng!');
+        alert('Vui lòng nhập tên đại lý!');
         e.preventDefault();
         return;
       }
@@ -526,6 +564,10 @@
         datetime: new Date().toLocaleString('vi-VN')
       };
       sessionStorage.setItem('tempOrderData', JSON.stringify(tempOrderData));
+
+      // Cho phép submit
+      document.getElementById('form-agent').value = selectedAgent;
+      document.getElementById('form-discount').value = selectedDiscount;
 
       isSubmitting = true;
       const submitBtn = document.getElementById('submit-btn');

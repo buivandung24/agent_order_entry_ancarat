@@ -83,7 +83,7 @@ async function ensureTodaySheet(prefix) {
                 values: [
                     [
                         'Mã đơn',
-                        'Khách hàng',
+                        'Đại lý/Khách',
                         'Chiết khấu (%)',
                         'Sản phẩm',
                         'Giá chốt',
@@ -116,7 +116,7 @@ async function ensureTodaySheet(prefix) {
               .flat()
               .filter(code => typeof code === 'string')
               .map(code => {
-                const numStr = code.slice(0, -10);
+                const numStr = code.slice(0, -11);
                 const num = parseInt(numStr, 10);
                 return isNaN(num) ? 0 : num;
               });
@@ -168,18 +168,30 @@ async function getAgents() {
     try {
         const res = await sheets.spreadsheets.values.get({
             spreadsheetId: config.daily_sheet_id,
-            range: 'Dai_Ly!A2:B',
+            range: 'Dai_Ly!A2:C',
         });
         const rows = res.data.values || [];
         return rows.map(row => {
             const name = (row[0] || '').toString().trim();
-            let discountStr = (row[1] || '0').toString().trim();
-            
-            discountStr = discountStr.replace(/,/g, '.');
-            
-            const discount = parseFloat(discountStr) || 0;
-            return { name, discount };
-        }).filter(a => a.name);
+
+            // Chiết khấu bán (cột B - row[1])
+            let sellDiscountStr = (row[1] || '0').toString().trim();
+            sellDiscountStr = sellDiscountStr.replace(/,/g, '.');
+            const sellDiscount = parseFloat(sellDiscountStr) || 0;
+
+            // Chiết khấu mua lại (cột C - row[2])
+            let buyDiscountStr = (row[2] || '0').toString().trim();
+            buyDiscountStr = buyDiscountStr.replace(/,/g, '.');
+            const buyDiscount = parseFloat(buyDiscountStr) || 0;
+
+            if (!name) return null;
+
+            return {
+                name,
+                discount: sellDiscount,
+                buyDiscount: buyDiscount
+            };
+        }).filter(Boolean); // loại bỏ null
     } catch (e) {
         console.error('Lỗi lấy đại lý và chiết khấu:', e.message);
         return [];
@@ -223,10 +235,12 @@ async function getProducts() {
 async function appendOrder(lines, userName) {
     if (lines.length === 0) throw new Error('Không có dòng dữ liệu');
 
-    const agent = lines[0].agent.trim(); // Giả sử tất cả lines có cùng agent
+    const agent = lines[0].agent.trim();
     const agents = await getAgents();
     const isDaiLy = agents.some(a => a.name.toLowerCase() === agent.toLowerCase());
-    const prefix = isDaiLy ? 'Dai_Ly' : 'Khach_Le';
+
+    const prefix = isDaiLy ? 'Ban_Dai_Ly' : 'Ban_Khach_Le';
+    const suffix = isDaiLy ? 'BDL' : 'BKL';  // BDL cho đại lý, BKL cho khách lẻ
 
     const { title, nextOrderNum } = await ensureTodaySheet(prefix);
 
@@ -235,7 +249,7 @@ async function appendOrder(lines, userName) {
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const year = today.getFullYear();
 
-    const orderCode = `${nextOrderNum}${day}${month}${year}${isDaiLy ? 'DL' : 'KL'}`;
+    const orderCode = `${nextOrderNum}${day}${month}${year}${suffix}`;
 
     const uniqueProductNames = [...new Set(lines.map(line => line.product.trim()))];
     const currentPrices = await fetchCurrentPrices(uniqueProductNames);
@@ -287,67 +301,72 @@ async function appendOrder(lines, userName) {
 }
 
 async function appendOrderMuaLai(lines, userName) {
-  if (lines.length === 0) throw new Error('Không có dòng dữ liệu');
+    if (lines.length === 0) throw new Error('Không có dòng dữ liệu');
 
-  const prefix = 'Mua_Lai';
-  const suffix = 'ML';
+    const agent = lines[0].agent.trim();
+    const agents = await getAgents();
+    const isDaiLy = agents.some(a => a.name.toLowerCase() === agent.toLowerCase());
 
-  const { title, nextOrderNum } = await ensureTodaySheet(prefix);
+    const prefix = isDaiLy ? 'Mua_Dai_Ly' : 'Mua_Khach_Le';
+    const suffix = isDaiLy ? 'MDL' : 'MKL';  // MDL cho đại lý, MKL cho khách lẻ
 
-  const today = new Date();
-  const day = String(today.getDate()).padStart(2, '0');
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const year = today.getFullYear();
+    const { title, nextOrderNum } = await ensureTodaySheet(prefix);
 
-  const orderCode = `${nextOrderNum}${day}${month}${year}${suffix}`;
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
 
-  const uniqueProductNames = [...new Set(lines.map(line => line.product.trim()))];
-  const currentPrices = await fetchCurrentPrices(uniqueProductNames);
+    const orderCode = `${nextOrderNum}${day}${month}${year}${suffix}`;
 
-  const vnTime = dayjs().tz('Asia/Ho_Chi_Minh');
-  const timeStr = vnTime.format('HH:mm');
+    const uniqueProductNames = [...new Set(lines.map(line => line.product.trim()))];
+    const currentPrices = await fetchCurrentPrices(uniqueProductNames);
 
-  const values = lines.map(line => {
-    const productLower = line.product.trim().toLowerCase();
-    currentPrice = currentPrices[productLower]?.buy || 0;
+    const vnTime = dayjs().tz('Asia/Ho_Chi_Minh');
+    const timeStr = vnTime.format('HH:mm');
 
-    const totalOld = line.price * line.quantity;
-    const discountAmountOld = totalOld * (line.discountPercent / 100);
-    const finalOld = totalOld - discountAmountOld;
+    const values = lines.map(line => {
+        const productLower = line.product.trim().toLowerCase();
+        // Dùng buyPrice cho mua lại
+        const currentPrice = currentPrices[productLower]?.buy || 0;
 
-    const totalNew = currentPrice * line.quantity;
-    const discountAmountNew = totalNew * (line.discountPercent / 100);
-    const finalNew = totalNew - discountAmountNew;
+        const totalOld = line.price * line.quantity;
+        const discountAmountOld = totalOld * (line.discountPercent / 100);
+        const finalOld = totalOld - discountAmountOld;
 
-    return [
-      orderCode,
-      line.agent.trim(), // Đây là tên khách hàng
-      line.discountPercent || 0,
-      line.product.trim(),
-      line.price,
-      currentPrice || '',
-      line.quantity,
-      totalOld,
-      discountAmountOld,
-      finalOld,
-      totalNew,
-      discountAmountNew,
-      finalNew,
-      userName,
-      timeStr,
-      line.note || ''
-    ];
-  });
+        const totalNew = currentPrice * line.quantity;
+        const discountAmountNew = totalNew * (line.discountPercent / 100);
+        const finalNew = totalNew - discountAmountNew;
 
-  await sheets.spreadsheets.values.append({
-    spreadsheetId: config.ketqua_sheet_id,
-    range: `${title}!A:P`,
-    valueInputOption: 'USER_ENTERED',
-    insertDataOption: 'INSERT_ROWS',
-    requestBody: { values }
-  });
+        return [
+            orderCode,
+            line.agent.trim(),
+            line.discountPercent || 0,
+            line.product.trim(),
+            line.price,              // Giá chốt (buyPrice)
+            currentPrice || '',
+            line.quantity,
+            totalOld,
+            discountAmountOld,
+            finalOld,
+            totalNew,
+            discountAmountNew,
+            finalNew,
+            userName,
+            timeStr,
+            line.note || ''
+        ];
+    });
 
-  return orderCode;
+    await sheets.spreadsheets.values.append({
+        spreadsheetId: config.ketqua_sheet_id,
+        range: `${title}!A:P`,
+        valueInputOption: 'USER_ENTERED',
+        insertDataOption: 'INSERT_ROWS',
+        requestBody: { values }
+    });
+
+    return orderCode;
 }
 
 module.exports = {

@@ -15,7 +15,7 @@
 
   <div class="container">
     <div class="page-header">
-      <h1>Nhập Đơn Hàng Đại Lý</h1>
+      <h1>Nhập Đơn Hàng bán đi</h1>
       <a href="/mua-lai" class="button" style="background: #ff9900; color: white; padding: 8px 16px; text-decoration: none; border-radius: 6px; font-weight: 500;">
         Nhập đơn mua lại
       </a>
@@ -70,7 +70,7 @@
               <select class="product-select" name="product_0" required placeholder="Tìm sản phẩm...">
                 <option value="">Chọn sản phẩm...</option>
                 <% products.forEach(p => { %>
-                  <option value="<%= p.name %>" data-price="<%= p.price %>"><%= p.name %></option>
+                  <option value="<%= p.name %>" data-price="<%= p.sellPrice %>"><%= p.name %></option>
                 <% }) %>
               </select>
             </td>
@@ -277,7 +277,7 @@
     const productOptionsHTML = `
         <option value="">Chọn sản phẩm...</option>
         <% products.forEach(p => { %>
-            <option value="<%= p.name %>" data-price="<%= p.price %>"><%= p.name %></option>
+            <option value="<%= p.name %>" data-price="<%= p.sellPrice %>"><%= p.name %></option>
         <% }) %>
     `;
 
@@ -373,7 +373,7 @@
 
         const newPriceMap = {};
         newProducts.forEach(p => {
-          newPriceMap[p.name.trim()] = p.price;
+          newPriceMap[p.name.trim()] = p.sellPrice;
         });
 
         document.querySelectorAll('.product-select').forEach(select => {

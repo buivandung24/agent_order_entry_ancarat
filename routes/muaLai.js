@@ -24,14 +24,14 @@ router.get('/', async (req, res) => {
   }
 
   const sessionMinutes = getSessionMinutes();
-
   const endTime = new Date(Date.now() + sessionMinutes * 60 * 1000);
   req.session.sessionEndTime = endTime.toISOString();
   req.session.sessionMinutes = sessionMinutes;
 
   try {
-    const products = await getProducts();
+    const [agents, products] = await Promise.all([getAgents(), getProducts()]);
     res.render('mua-lai', { 
+      agents, 
       products, 
       success: req.query.success,
       error: req.query.error,
@@ -49,11 +49,11 @@ router.post('/submit', async (req, res) => {
     const lines = [];
     const userName = req.session.user?.fullName || 'Unknown';
 
-    const customer = req.body.selected_agent?.trim(); // Thay agent thành customer
-    const customerDiscount = 0.5; // Mặc định 0.5%
+    const agent = req.body.selected_agent?.trim();
+    const agentDiscount = parseFloat(req.body.selected_discount_percent) || 0;
 
-    if (!customer) {
-      throw new Error('Chưa nhập tên khách hàng');
+    if (!agent) {
+      throw new Error('Chưa chọn đại lý');
     }
 
     const productKeys = Object.keys(req.body).filter(k => k.startsWith('product_'));
@@ -68,14 +68,14 @@ router.post('/submit', async (req, res) => {
       if (!product || qty <= 0 || priceChot <= 0) continue;
 
       lines.push({
-        agent: customer, // Sử dụng customer thay agent
+        agent,
         product,
         price: priceChot,
         quantity: qty,
-        discountPercent: customerDiscount,
+        discountPercent: agentDiscount,
         total: priceChot * qty,
-        discountAmount: (priceChot * qty) * (customerDiscount / 100),
-        finalAmount: (priceChot * qty) * (1 - customerDiscount / 100),
+        discountAmount: (priceChot * qty) * (agentDiscount / 100),
+        finalAmount: (priceChot * qty) * (1 - agentDiscount / 100),
         note
       });
     }
@@ -84,15 +84,14 @@ router.post('/submit', async (req, res) => {
       throw new Error('Không có sản phẩm hợp lệ');
     }
 
-    const orderCode = await appendOrderMuaLai(lines, userName); // Gọi hàm mới cho mua lại
+    const orderCode = await appendOrderMuaLai(lines, userName);
 
-    // Discord notification (giữ nguyên, nhưng có thể chỉnh title nếu cần)
     const vnTime = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 
     await sendOrderToDiscord({
       orderCode,
-      agent: customer,
-      discountPercent: customerDiscount,
+      agent,
+      discountPercent: agentDiscount,
       lines: lines.map(l => ({
         product: l.product,
         price: l.price,
@@ -104,7 +103,7 @@ router.post('/submit', async (req, res) => {
       })),
       userName,
       createdAt: vnTime,
-      orderType: 'mua'
+      orderType: 'mua'  // quan trọng: để Discord hiển thị là mua lại
     });
 
     res.redirect(`/mua-lai?success=1&orderCode=${orderCode}`);
