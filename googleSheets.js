@@ -332,11 +332,11 @@ async function appendOrderMuaLai(lines, userName) {
 
         const totalOld = line.price * line.quantity;
         const discountAmountOld = totalOld * (line.discountPercent / 100);
-        const finalOld = totalOld - discountAmountOld;
+        const finalOld = totalOld + discountAmountOld;
 
         const totalNew = currentPrice * line.quantity;
         const discountAmountNew = totalNew * (line.discountPercent / 100);
-        const finalNew = totalNew - discountAmountNew;
+        const finalNew = totalNew + discountAmountNew;
 
         return [
             orderCode,

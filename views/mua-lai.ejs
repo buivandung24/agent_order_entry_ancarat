@@ -429,7 +429,7 @@
       const price = parseFloat(row.querySelector('.price').value) || 0;
       const total = price * qty;
       const discountAmount = total * (selectedDiscount / 100);
-      const final = total - discountAmount;
+      const final = total + discountAmount;
 
       const formatNumber = (num) => num.toLocaleString('vi-VN');
 
