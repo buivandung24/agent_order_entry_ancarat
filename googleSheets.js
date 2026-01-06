@@ -49,83 +49,82 @@ async function getSheetTitles(spreadsheetId) {
 }
 
 // Tạo sheet mới nếu chưa có
-async function ensureTodaySheet() {
-  const today = new Date();
-  const day = String(today.getDate()).padStart(2, '0');
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const year = today.getFullYear();
-  const todayStr = `${day}_${month}_${year}`;
-  const title = `Ket_Qua_${todayStr}`;
+async function ensureTodaySheet(prefix) {
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+    const todayStr = `${day}_${month}_${year}`;
+    const title = `${prefix}_${todayStr}`;
 
-  const titles = await getSheetTitles(config.ketqua_sheet_id);
+    const titles = await getSheetTitles(config.ketqua_sheet_id);
 
-  let nextOrderNum = 1; // mặc định nếu chưa có đơn nào trong ngày
+    let nextOrderNum = 1; // mặc định nếu chưa có đơn nào trong ngày
 
-  if (titles.includes(title)) {
-    // Đọc cột A từ dòng 2 trở đi (bỏ header)
-    const res = await sheets.spreadsheets.values.get({
-      spreadsheetId: config.ketqua_sheet_id,
-      range: `${title}!A2:A`
-    });
+    if (!titles.includes(title)) {
+        // Tạo sheet mới
+        await sheets.spreadsheets.batchUpdate({
+            spreadsheetId: config.ketqua_sheet_id,
+            requestBody: {
+                requests: [
+                    {
+                        addSheet: { properties: { title } },
+                    },
+                ],
+            },
+        });
 
-    const values = res.data.values;
+        // Thêm header
+        await sheets.spreadsheets.values.update({
+            spreadsheetId: config.ketqua_sheet_id,
+            range: `${title}!A1:P1`,
+            valueInputOption: 'USER_ENTERED',
+            requestBody: {
+                values: [
+                    [
+                        'Mã đơn',
+                        'Khách hàng',
+                        'Chiết khấu (%)',
+                        'Sản phẩm',
+                        'Giá chốt',
+                        'Giá hiện tại',
+                        'Số lượng',
+                        'Tổng',
+                        'Tiền CK',
+                        'Thành tiền',
+                        'Tổng mới',
+                        'CK mới',
+                        'Thành tiền mới',
+                        'Nhân viên',
+                        'Thời gian',
+                        'Ghi chú'
+                    ],
+                ],
+            },
+        });
+    } else {
+        // Đọc cột A từ dòng 2 trở đi (bỏ header)
+        const res = await sheets.spreadsheets.values.get({
+            spreadsheetId: config.ketqua_sheet_id,
+            range: `${title}!A2:A`
+        });
 
-    if (values && values.length > 0) {
-      const orderNumbers = values
-        .flat()
-        .filter(code => typeof code === 'string')
-        .map(code => {
-          // Cắt bỏ 8 ký tự cuối (DDMMYYYY) để lấy số thứ tự
-          const numStr = code.slice(0, -8);
-          const num = parseInt(numStr, 10);
-          return isNaN(num) ? 0 : num;
-        })
-        .filter(num => num > 0);
+        const values = res.data.values;
 
-      if (orderNumbers.length > 0) {
-        const maxNum = Math.max(...orderNumbers);
-        nextOrderNum = maxNum + 1;
-      }
+        if (values && values.length > 0) {
+            const orderNumbers = values
+              .flat()
+              .filter(code => typeof code === 'string')
+              .map(code => {
+                const numStr = code.slice(0, -10);
+                const num = parseInt(numStr, 10);
+                return isNaN(num) ? 0 : num;
+              });
+            nextOrderNum = Math.max(...orderNumbers) + 1;
+        }
     }
-  } else {
-    // Tạo sheet mới + header
-    await sheets.spreadsheets.batchUpdate({
-      spreadsheetId: config.ketqua_sheet_id,
-      requestBody: {
-        requests: [{
-          addSheet: { properties: { title } }
-        }]
-      }
-    });
 
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: config.ketqua_sheet_id,
-      range: `${title}!A1:P1`,
-      valueInputOption: 'USER_ENTERED',
-      requestBody: {
-        values: [[
-          'Mã đơn hàng',
-          'Tên đại lý',
-          'Chiết khấu (%)',
-          'Tên sản phẩm',
-          'Giá chốt',
-          'Giá hiện tại',
-          'Số lượng',
-          'Tổng tiền (Giá chốt)',
-          'Tiền CK (Giá chốt)',
-          'Thành tiền (Giá chốt)',
-          'Tổng tiền (Giá hiện tại)',
-          'Tiền CK (Giá hiện tại)',
-          'Thành tiền (Giá hiện tại)',
-          'Người nhập',
-          'Thời gian',
-          'Ghi chú'
-        ]]
-      }
-    });
-  }
-
-  return { title, nextOrderNum };
+    return { title, nextOrderNum };
 }
 
 async function fetchCurrentPrices(productNames) {
@@ -218,62 +217,69 @@ async function getProducts() {
 
 // Ghi đơn hàng
 async function appendOrder(lines, userName) {
-  const { title, nextOrderNum } = await ensureTodaySheet();
+    if (lines.length === 0) throw new Error('Không có dòng dữ liệu');
 
-  const today = new Date();
-  const day = String(today.getDate()).padStart(2, '0');
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const year = today.getFullYear();
+    const agent = lines[0].agent.trim(); // Giả sử tất cả lines có cùng agent
+    const agents = await getAgents();
+    const isDaiLy = agents.some(a => a.name.toLowerCase() === agent.toLowerCase());
+    const prefix = isDaiLy ? 'Dai_Ly' : 'Khach_Le';
 
-  const orderCode = `${nextOrderNum}${day}${month}${year}`;
+    const { title, nextOrderNum } = await ensureTodaySheet(prefix);
 
-  const uniqueProductNames = [...new Set(lines.map(line => line.product.trim()))];
-  const currentPrices = await fetchCurrentPrices(uniqueProductNames);
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
 
-  const vnTime = dayjs().tz('Asia/Ho_Chi_Minh');
-  const timeStr = vnTime.format('HH:mm');
+    const orderCode = `${nextOrderNum}${day}${month}${year}${isDaiLy ? 'DL' : 'KL'}`;
 
-  const values = lines.map(line => {
-    const productLower = line.product.trim().toLowerCase();
-    const currentPrice = currentPrices[productLower] || 0;
+    const uniqueProductNames = [...new Set(lines.map(line => line.product.trim()))];
+    const currentPrices = await fetchCurrentPrices(uniqueProductNames);
 
-    const totalOld = line.price * line.quantity;
-    const discountAmountOld = totalOld * (line.discountPercent / 100);
-    const finalOld = totalOld - discountAmountOld;
+    const vnTime = dayjs().tz('Asia/Ho_Chi_Minh');
+    const timeStr = vnTime.format('HH:mm');
 
-    const totalNew = currentPrice * line.quantity;
-    const discountAmountNew = totalNew * (line.discountPercent / 100);
-    const finalNew = totalNew - discountAmountNew;
+    const values = lines.map(line => {
+        const productLower = line.product.trim().toLowerCase();
+        const currentPrice = currentPrices[productLower] || 0;
 
-    return [
-      orderCode,
-      line.agent.trim(),
-      line.discountPercent || 0,
-      line.product.trim(),
-      line.price,
-      currentPrice || '',
-      line.quantity,
-      totalOld,
-      discountAmountOld,
-      finalOld,
-      totalNew,
-      discountAmountNew,
-      finalNew,
-      userName,
-      timeStr,
-      line.note || ''
-    ];
-  });
+        const totalOld = line.price * line.quantity;
+        const discountAmountOld = totalOld * (line.discountPercent / 100);
+        const finalOld = totalOld - discountAmountOld;
 
-  await sheets.spreadsheets.values.append({
-    spreadsheetId: config.ketqua_sheet_id,
-    range: `${title}!A:P`,
-    valueInputOption: 'USER_ENTERED',
-    insertDataOption: 'INSERT_ROWS',
-    requestBody: { values }
-  });
+        const totalNew = currentPrice * line.quantity;
+        const discountAmountNew = totalNew * (line.discountPercent / 100);
+        const finalNew = totalNew - discountAmountNew;
 
-  return orderCode;
+        return [
+            orderCode,
+            line.agent.trim(),
+            line.discountPercent || 0,
+            line.product.trim(),
+            line.price,
+            currentPrice || '',
+            line.quantity,
+            totalOld,
+            discountAmountOld,
+            finalOld,
+            totalNew,
+            discountAmountNew,
+            finalNew,
+            userName,
+            timeStr,
+            line.note || ''
+        ];
+    });
+
+    await sheets.spreadsheets.values.append({
+        spreadsheetId: config.ketqua_sheet_id,
+        range: `${title}!A:P`,
+        valueInputOption: 'USER_ENTERED',
+        insertDataOption: 'INSERT_ROWS',
+        requestBody: { values }
+    });
+
+    return orderCode;
 }
 
 module.exports = {
