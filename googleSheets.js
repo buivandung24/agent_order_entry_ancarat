@@ -139,12 +139,14 @@ async function fetchCurrentPrices(productNames) {
 
         const priceMap = new Map();
         data.forEach(row => {
-            if (Array.isArray(row) && row.length >= 2) {
+            if (Array.isArray(row) && row.length >= 3) {
                 const name = (row[0] || '').toString().trim();
                 const sellPriceStr = (row[1] || '0').toString().replace(/,/g, '');
-                const price = parseFloat(sellPriceStr) || 0;
+                const buyPriceStr = (row[2] || '0').toString().replace(/,/g, '');
+                const sellPrice = parseFloat(sellPriceStr) || 0;
+                const buyPrice = parseFloat(buyPriceStr) || 0;
                 if (name) {
-                    priceMap.set(name.toLowerCase(), price);
+                    priceMap.set(name.toLowerCase(), { sell: sellPrice, buy: buyPrice });
                 }
             }
         });
@@ -152,7 +154,7 @@ async function fetchCurrentPrices(productNames) {
         // Trả về giá hiện tại cho từng sản phẩm yêu cầu
         const result = {};
         productNames.forEach(name => {
-            result[name.toLowerCase()] = priceMap.get(name.toLowerCase()) || null;
+            result[name.toLowerCase()] = priceMap.get(name.toLowerCase()) || { sell: 0, buy: 0 };
         });
         return result;
     } catch (e) {
@@ -202,9 +204,11 @@ async function getProducts() {
             if (Array.isArray(row) && row[1] !== "" && row.length >= 3) {
                 const name = (row[0] || '').toString().trim();
                 const priceSellStr = (row[1] || '0').toString().replace(/,/g, '').trim();
-                const price = parseFloat(priceSellStr) || 0;
+                const priceBuyStr = (row[2] || '0').toString().replace(/,/g, '').trim();
+                const sellPrice = parseFloat(priceSellStr) || 0;
+                const buyPrice = parseFloat(priceBuyStr) || 0;
                 if (name) {
-                    products.push({ name, price });
+                    products.push({ name, sellPrice, buyPrice });
                 }
             }
         }
@@ -241,7 +245,7 @@ async function appendOrder(lines, userName) {
 
     const values = lines.map(line => {
         const productLower = line.product.trim().toLowerCase();
-        const currentPrice = currentPrices[productLower] || 0;
+        currentPrice = currentPrices[productLower]?.sell || 0;
 
         const totalOld = line.price * line.quantity;
         const discountAmountOld = totalOld * (line.discountPercent / 100);
@@ -282,10 +286,75 @@ async function appendOrder(lines, userName) {
     return orderCode;
 }
 
+async function appendOrderMuaLai(lines, userName) {
+  if (lines.length === 0) throw new Error('Không có dòng dữ liệu');
+
+  const prefix = 'Mua_Lai';
+  const suffix = 'ML';
+
+  const { title, nextOrderNum } = await ensureTodaySheet(prefix);
+
+  const today = new Date();
+  const day = String(today.getDate()).padStart(2, '0');
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const year = today.getFullYear();
+
+  const orderCode = `${nextOrderNum}${day}${month}${year}${suffix}`;
+
+  const uniqueProductNames = [...new Set(lines.map(line => line.product.trim()))];
+  const currentPrices = await fetchCurrentPrices(uniqueProductNames);
+
+  const vnTime = dayjs().tz('Asia/Ho_Chi_Minh');
+  const timeStr = vnTime.format('HH:mm');
+
+  const values = lines.map(line => {
+    const productLower = line.product.trim().toLowerCase();
+    currentPrice = currentPrices[productLower]?.buy || 0;
+
+    const totalOld = line.price * line.quantity;
+    const discountAmountOld = totalOld * (line.discountPercent / 100);
+    const finalOld = totalOld - discountAmountOld;
+
+    const totalNew = currentPrice * line.quantity;
+    const discountAmountNew = totalNew * (line.discountPercent / 100);
+    const finalNew = totalNew - discountAmountNew;
+
+    return [
+      orderCode,
+      line.agent.trim(), // Đây là tên khách hàng
+      line.discountPercent || 0,
+      line.product.trim(),
+      line.price,
+      currentPrice || '',
+      line.quantity,
+      totalOld,
+      discountAmountOld,
+      finalOld,
+      totalNew,
+      discountAmountNew,
+      finalNew,
+      userName,
+      timeStr,
+      line.note || ''
+    ];
+  });
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: config.ketqua_sheet_id,
+    range: `${title}!A:P`,
+    valueInputOption: 'USER_ENTERED',
+    insertDataOption: 'INSERT_ROWS',
+    requestBody: { values }
+  });
+
+  return orderCode;
+}
+
 module.exports = {
   getAgents,
   getProducts,
   appendOrder,
+  appendOrderMuaLai,
   get config() { return config; },
   setConfig
 };

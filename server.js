@@ -62,6 +62,7 @@ app.use('/', requireLogin, require('./routes/entry'));
 app.use('/admin', requireLogin, requireAdmin, require('./routes/admin'));
 app.use('/config', requireLogin, requireAdmin, require('./routes/config'));
 app.use('/api', require('./routes/api'));
+app.use('/mua-lai', requireLogin, require('./routes/muaLai'));
 
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);

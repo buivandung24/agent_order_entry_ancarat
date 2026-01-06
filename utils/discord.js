@@ -39,7 +39,17 @@ function buildItemsTable(items) {
 async function sendOrderToDiscord(orderData) {
   if (!WEBHOOK_URL) return;
 
-  const { orderCode, agent, discountPercent, lines, userName, createdAt } = orderData;
+  const { orderCode, agent, discountPercent, lines, userName, createdAt, orderType = 'ban' } = orderData;
+  let title, description, color;
+  if (orderType === 'mua') {
+    title = "🔙 Đơn mua lại từ khách hàng";
+    description = `**${safeText(agent)}** vừa bán lại hàng cho công ty`;
+    color = 0xff9900; // màu cam nổi bật cho mua lại
+  } else {
+    title = "🛒 Đơn hàng mới từ đại lý";
+    description = `**${safeText(agent)}** vừa đặt đơn hàng`;
+    color = 0x00ff99; // giữ màu xanh cũ cho bán
+  }
 
   const sumTotal = lines.reduce((sum, l) => sum + l.total, 0);
   const sumDiscount = lines.reduce((sum, l) => sum + l.discountAmount, 0);
@@ -50,9 +60,9 @@ async function sendOrderToDiscord(orderData) {
     avatar_url: "https://cdn-icons-png.flaticon.com/512/3081/3081559.png",
     embeds: [
       {
-        title: "🛒 Đơn hàng mới từ đại lý",
-        description: `**${safeText(agent)}** vừa đặt đơn hàng`,
-        color: 0x00ff99,
+        title,
+        description,
+        color,
         fields: [
           {
             name: "🆔 Mã đơn hàng",
@@ -70,12 +80,12 @@ async function sendOrderToDiscord(orderData) {
             inline: true
           },
           {
-            name: "🏪 Người Mua",
+            name: orderType === 'mua' ? "🏠 Khách hàng bán lại" : "🏪 Đại lý/Khách",
             value: safeText(agent),
             inline: true
           },
           {
-            name: "💸 Chiết khấu đại lý",
+            name: "💸 Chiết khấu",
             value: `${discountPercent || 0}%`,
             inline: true
           },
@@ -86,7 +96,7 @@ async function sendOrderToDiscord(orderData) {
           },
           {
             name: "📝 Ghi chú sản phẩm",
-            value: lines.map(i => `**${i.product}**: ${safeText(i.note, 'Không có')}`).join('\n'),
+            value: lines.map(i => `**${i.product}**: ${safeText(i.note, 'Không có')}`).join('\n') || 'Không có',
             inline: false
           },
           {
@@ -108,7 +118,7 @@ async function sendOrderToDiscord(orderData) {
 
   try {
     await axios.post(WEBHOOK_URL, payload);
-    console.log('✅ Đã gửi thông báo đơn hàng đến Discord:', orderCode);
+    console.log(`✅ Đã gửi thông báo ${orderType === 'mua' ? 'mua lại' : 'bán'} đến Discord:`, orderCode);
   } catch (err) {
     console.error('❌ Lỗi gửi Discord webhook:', err.response?.data || err.message);
   }

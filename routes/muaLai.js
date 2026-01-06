@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getAgents, getProducts, appendOrder, config } = require('../googleSheets');
+const { getAgents, getProducts, appendOrderMuaLai, config } = require('../googleSheets');
 const { sendOrderToDiscord } = require('../utils/discord');
 const path = require('path');
 const fs = require('fs');
@@ -30,9 +30,8 @@ router.get('/', async (req, res) => {
   req.session.sessionMinutes = sessionMinutes;
 
   try {
-    const [agents, products] = await Promise.all([getAgents(), getProducts()]);
-    res.render('index', { 
-      agents, 
+    const products = await getProducts();
+    res.render('mua-lai', { 
       products, 
       success: req.query.success,
       error: req.query.error,
@@ -40,7 +39,7 @@ router.get('/', async (req, res) => {
       sessionEndTime: req.session.sessionEndTime
     });
   } catch (e) {
-    console.error('Lỗi load trang nhập đơn:', e.message);
+    console.error('Lỗi load trang mua lại:', e.message);
     res.redirect('/config?error=' + encodeURIComponent('Lỗi kết nối Google Sheets: ' + e.message));
   }
 });
@@ -50,11 +49,11 @@ router.post('/submit', async (req, res) => {
     const lines = [];
     const userName = req.session.user?.fullName || 'Unknown';
 
-    const agent = req.body.selected_agent?.trim();
-    const agentDiscount = parseFloat(req.body.selected_discount_percent) || 0;
+    const customer = req.body.selected_agent?.trim(); // Thay agent thành customer
+    const customerDiscount = 0.5; // Mặc định 0.5%
 
-    if (!agent) {
-      throw new Error('Chưa chọn đại lý');
+    if (!customer) {
+      throw new Error('Chưa nhập tên khách hàng');
     }
 
     const productKeys = Object.keys(req.body).filter(k => k.startsWith('product_'));
@@ -69,14 +68,14 @@ router.post('/submit', async (req, res) => {
       if (!product || qty <= 0 || priceChot <= 0) continue;
 
       lines.push({
-        agent,
+        agent: customer, // Sử dụng customer thay agent
         product,
         price: priceChot,
         quantity: qty,
-        discountPercent: agentDiscount,
+        discountPercent: customerDiscount,
         total: priceChot * qty,
-        discountAmount: (priceChot * qty) * (agentDiscount / 100),
-        finalAmount: (priceChot * qty) * (1 - agentDiscount / 100),
+        discountAmount: (priceChot * qty) * (customerDiscount / 100),
+        finalAmount: (priceChot * qty) * (1 - customerDiscount / 100),
         note
       });
     }
@@ -85,20 +84,15 @@ router.post('/submit', async (req, res) => {
       throw new Error('Không có sản phẩm hợp lệ');
     }
 
-    const today = new Date();
-    const day = String(today.getDate()).padStart(2, '0');
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const year = today.getFullYear();
+    const orderCode = await appendOrderMuaLai(lines, userName); // Gọi hàm mới cho mua lại
 
-    const orderCode = await appendOrder(lines, userName);
-
-    //discord notification
+    // Discord notification (giữ nguyên, nhưng có thể chỉnh title nếu cần)
     const vnTime = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 
     await sendOrderToDiscord({
       orderCode,
-      agent,
-      discountPercent: agentDiscount,
+      agent: customer,
+      discountPercent: customerDiscount,
       lines: lines.map(l => ({
         product: l.product,
         price: l.price,
@@ -110,13 +104,13 @@ router.post('/submit', async (req, res) => {
       })),
       userName,
       createdAt: vnTime,
-      orderType: 'ban'
+      orderType: 'mua'
     });
 
-    res.redirect(`/?success=1&orderCode=${orderCode}`);
+    res.redirect(`/mua-lai?success=1&orderCode=${orderCode}`);
   } catch (e) {
-    console.error('Lỗi submit:', e.message);
-    res.redirect('/?error=' + encodeURIComponent(e.message));
+    console.error('Lỗi submit mua lại:', e.message);
+    res.redirect('/mua-lai?error=' + encodeURIComponent(e.message));
   }
 });
 
