@@ -17,15 +17,16 @@ function safeText(text, fallback = 'Không có') {
 function buildItemsTable(items) {
   if (items.length === 0) return 'Không có sản phẩm';
 
-  const header = 'Sản phẩm                          | Giá chốt     | SL   | Thành tiền';
-  const line = '────────────────────────────────────────────────────────────';
+  const header = 'Sản phẩm                                                |   Giá chốt   |  SL  |   Thành tiền   | Ngày giao';
+  const line = '────────────────────────────────────────────────────────';
 
   const rows = items.map(i => {
-    const name = (i.product || '').padEnd(32).slice(0, 32);
+    const name = (i.product || '').padEnd(57).slice(0, 57);
     const price = formatVND(i.price).padStart(12);
     const qty = String(i.quantity || 0).padStart(4);
     const final = formatVND(i.finalAmount).padStart(14); 
-    return `${name} | ${price} | ${qty} | ${final}`;
+    const date = safeText(i.deliveryDate, 'Không có').padStart(10);
+    return `${name} | ${price} | ${qty} | ${final} | ${date}`;
   });
 
   const maxRows = 10;

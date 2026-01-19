@@ -110,11 +110,7 @@ h2 { color: #495057; border-bottom: 2px solid #eee; padding-bottom: 10px; }
 #order-table th:nth-child(4), 
 #order-table th:nth-child(5), 
 #order-table th:nth-child(6), 
-#order-table th:nth-child(7), 
-#order-table th:nth-child(8) { min-width: 120px; text-align: center; } /* Các cột tiền */
-#order-table td:nth-child(8) {
-  min-width: 200px !important;
-}
+#order-table th:nth-child(7) { min-width: 120px; text-align: center; } /* Các cột tiền */
 
 /* Input trong bảng: Tràn viền, nhìn sạch sẽ */
 #order-table input { 

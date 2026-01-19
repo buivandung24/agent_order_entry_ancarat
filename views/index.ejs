@@ -7,6 +7,10 @@
   <link rel="stylesheet" href="/style.css" />
   <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+  <style>
+    #order-table th:nth-child(8) { min-width: 120px; text-align: center; }
+    #order-table th:nth-child(9) { min-width: 200px; text-align: center; }
+  </style>
 </head>
 <body>
   <a href="/logout" class="btn-logout-fixed">
@@ -59,6 +63,7 @@
             <th>Tổng</th>
             <th>Tiền CK</th>
             <th>Thành tiền</th>
+            <th>Ngày giao</th>
             <th>Ghi chú</th>
             <th>Xóa</th>
           </tr>
@@ -70,7 +75,7 @@
               <select class="product-select" name="product_0" required placeholder="Tìm sản phẩm...">
                 <option value="">Chọn sản phẩm...</option>
                 <% products.forEach(p => { %>
-                  <option value="<%= p.name %>" data-price="<%= p.sellPrice %>"><%= p.name %></option>
+                  <option value="<%= p.name %>" data-price="<%= p.sellPrice %>" data-id="<%= p.id %>"><%= p.name %></option>
                 <% }) %>
               </select>
             </td>
@@ -91,6 +96,9 @@
             <td data-label="Thành tiền">
               <span class="final-amount display" style="font-weight: bold; color: #d63384;">0</span>
             </td>
+            <td data-label="Ngày giao">
+              <span class="delivery-date display"></span>
+            </td>
             <td data-label="Ghi chú">
               <textarea name="note_0" class="note-textarea" placeholder="Ghi chú (tùy chọn)" rows="2"></textarea>  <!-- THAY INPUT THÀNH TEXTAREA, thêm rows=2 để mặc định 2 dòng -->
             </td>
@@ -108,6 +116,7 @@
             <td style="text-align: center; padding: 15px; color: #d63384; font-size: 22px; font-weight: bold;">
               <span id="grand-final-amount">0</span> ₫
             </td>
+            <td></td>
             <td></td>
           </tr>
         </tfoot>
@@ -192,6 +201,7 @@
           <th width="10%">SL</th>
           <th width="15%">Tổng</th>
           <th width="15%">Thành tiền</th>
+          <th width="15%">Ngày giao</th>
         </tr>
       </thead>
       <tbody id="print-table-body">
@@ -199,7 +209,7 @@
       </tbody>
       <tfoot>
         <tr class="highlight">
-          <td colspan="5" class="text-right bold large">TỔNG THÀNH TIỀN:</td>
+          <td colspan="6" class="text-right bold large">TỔNG THÀNH TIỀN:</td>
           <td class="text-right large" id="print-grand-final">0 ₫</td>
         </tr>
       </tfoot>
@@ -243,6 +253,8 @@
     let selectedAgent = '';
     let selectedDiscount = 0;
 
+    var deliveryDates = JSON.parse(<%- JSON.stringify(deliveryDates || {}) %>);
+
     new TomSelect("#selected-agent", {
         create: true,
         dropdownParent: 'body',
@@ -277,35 +289,51 @@
     const productOptionsHTML = `
         <option value="">Chọn sản phẩm...</option>
         <% products.forEach(p => { %>
-            <option value="<%= p.name %>" data-price="<%= p.sellPrice %>"><%= p.name %></option>
+            <option value="<%= p.name %>" data-price="<%= p.sellPrice %>" data-id="<%= p.id %>"><%= p.name %></option>
         <% }) %>
     `;
 
     function initProductSelect(selectElement) {
-        new TomSelect(selectElement, {
-            create: false,
-            sortField: { field: "text", direction: "asc" },
-            dropdownParent: 'body',
-            onChange: function(value) {
-                const row = selectElement.closest('tr');
-                const priceInput = row.querySelector('.price');
-                const priceDisplay = row.querySelector('.price-display');
+      new TomSelect(selectElement, {
+        create: false,
+        sortField: { field: "text", direction: "asc" },
+        dropdownParent: 'body',
+        onItemAdd: function(value) {  // Trigger khi item được add/select
+          console.log('Item Added:', value);  // Debug to check if select action happens
+          const row = this.input.closest('tr');
+          calcTotal(row.querySelector('.qty'));
+        },
+        onChange: function(value) {
+          console.log('On Change Triggered, Value:', value);  // Debug
+          const row = this.input.closest('tr');
+          const priceInput = row.querySelector('.price');
+          const priceDisplay = row.querySelector('.price-display');
 
-                const key = value.toLowerCase().replace(/"/g, '\\"');
-                
-                if (productPricesAtLoad[key] !== undefined) {
-                    const price = productPricesAtLoad[key];
-                    priceInput.value = price;
-                    priceDisplay.textContent = price.toLocaleString('vi-VN');
-                } else {
-                    priceInput.value = '';
-                    priceDisplay.textContent = '0';
-                }
-                
-                // Tính lại tiền dòng này
-                calcTotal(row.querySelector('.qty'));
-            }
-        });
+          const optionData = this.options[value];
+          console.log('Option Data:', optionData);  // Debug
+
+          if (optionData) {
+            const price = parseFloat(optionData.price) || 0;
+            priceInput.value = price;
+            priceDisplay.textContent = price.toLocaleString('vi-VN');
+
+            let id = optionData.id || '';
+            id = id.trim();  // Clean id to match deliveryDates key
+            console.log('ID from option:', id);  // Debug
+            console.log('Available keys in deliveryDates:', Object.keys(deliveryDates));  // Debug
+            console.log('Date for id:', deliveryDates[id]);
+            const date = deliveryDates[id] || 'Không có ngày';
+            row.querySelector('.delivery-date').textContent = date;
+          } else {
+            priceInput.value = '';
+            priceDisplay.textContent = '0';
+            row.querySelector('.delivery-date').textContent = '';
+          }
+
+          calcTotal(row.querySelector('.qty'));
+        }
+      });
+      // Remove manual addOption - TomSelect auto parse data-* from HTML
     }
     
     const productPricesAtLoad = {};
@@ -366,14 +394,14 @@
       try {
         document.getElementById('session-expired-popup').style.display = 'none';
 
-        // 1. Cập nhật sản phẩm mới
         const response = await fetch('/api/products');
         if (!response.ok) throw new Error('Không thể kết nối API sản phẩm');
         const newProducts = await response.json();
 
-        const newPriceMap = {};
+        productPricesAtLoad = {};
         newProducts.forEach(p => {
-          newPriceMap[p.name.trim()] = p.sellPrice;
+          const nameLower = p.name.trim().toLowerCase().replace(/"/g, '\\"');
+          productPricesAtLoad[nameLower] = p.sellPrice;
         });
 
         document.querySelectorAll('.product-select').forEach(select => {
@@ -385,36 +413,33 @@
           ts.clearOptions();
           newProducts.forEach(p => {
             const name = p.name.trim();
-            ts.addOption({ value: name, text: name });
+            ts.addOption({
+              value: name,
+              text: name,
+              price: p.sellPrice.toString(),  // String to match HTML parse
+              id: p.id
+            });
           });
 
-          if (currentValue && newPriceMap[currentValue.trim()]) {
-            ts.setValue(currentValue.trim(), true);
+          if (currentValue) {
+            ts.setValue(currentValue, false);  // Trigger onChange
           }
 
           ts.refreshOptions(false);
         });
 
+        // Force trigger for all rows
         document.querySelectorAll('.entry-row').forEach(row => {
-          const productSelect = row.querySelector('.product-select');
-          const selectedProduct = productSelect?.tomselect?.getValue()?.trim();
-
-          if (selectedProduct && newPriceMap[selectedProduct] !== undefined) {
-            const newPrice = newPriceMap[selectedProduct];
-            row.querySelector('.price').value = newPrice;
-            row.querySelector('.price-display').textContent = newPrice.toLocaleString('vi-VN');
-            calcTotal(row.querySelector('.qty'));
-          }
+          const ts = row.querySelector('.product-select').tomselect;
+          if (ts) ts.onChange(ts.getValue());
         });
 
-        // 2. Gia hạn phiên
         const resetRes = await fetch('/api/reset-session', { method: 'POST' });
         if (!resetRes.ok) throw new Error('Không thể gia hạn phiên');
 
         const resetData = await resetRes.json();
         sessionEndTime = new Date(resetData.sessionEndTime).getTime();
 
-        // 3. Tạo lại timer mới (clear cũ, dùng sessionEndTime mới)
         startTimer();
       } catch (err) {
         console.error('Lỗi refreshPrices:', err);
@@ -487,6 +512,9 @@
         <td data-label="Tổng"><span class="total display">0</span></td>
         <td data-label="Tiền CK"><span class="discount-amount display">0</span></td>
         <td data-label="Thành tiền"><span class="final-amount display" style="font-weight: bold; color: #d63384;">0</span></td>
+        <td data-label="Ngày giao">
+          <span class="delivery-date display"></span>
+        </td>
         <td data-label="Ghi chú">
           <textarea name="note_${index}" class="note-textarea" placeholder="Ghi chú (tùy chọn)" rows="2"></textarea>
         </td>
@@ -544,7 +572,8 @@
             price: priceText,
             qty: qty.toString(),
             total: totalText,
-            final: finalText
+            final: finalText,
+            deliveryDate: row.querySelector('.delivery-date')?.textContent || ''
           });
         }
       });
@@ -635,6 +664,7 @@
           <td class="text-right">${item.qty}</td>
           <td class="text-right">${item.total}</td>
           <td class="text-right bold">${item.final}</td>
+          <td class="text-center">${item.deliveryDate || ''}</td>
         `;
         tbody.appendChild(tr);
       });

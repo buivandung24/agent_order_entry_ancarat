@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getAgents, getProducts, appendOrder, config } = require('../googleSheets');
+const { getAgents, getProducts, appendOrder, config, getDeliveryDates } = require('../googleSheets');
 const { sendOrderToDiscord } = require('../utils/discord');
 const path = require('path');
 const fs = require('fs');
@@ -31,13 +31,15 @@ router.get('/', async (req, res) => {
 
   try {
     const [agents, products] = await Promise.all([getAgents(), getProducts()]);
+    const deliveryDates = await getDeliveryDates();
     res.render('index', { 
       agents, 
       products, 
       success: req.query.success,
       error: req.query.error,
       sessionMinutes: req.session.sessionMinutes || sessionMinutes,
-      sessionEndTime: req.session.sessionEndTime
+      sessionEndTime: req.session.sessionEndTime,
+      deliveryDates: JSON.stringify(deliveryDates)
     });
   } catch (e) {
     console.error('Lỗi load trang nhập đơn:', e.message);
@@ -85,14 +87,16 @@ router.post('/submit', async (req, res) => {
       throw new Error('Không có sản phẩm hợp lệ');
     }
 
-    const today = new Date();
-    const day = String(today.getDate()).padStart(2, '0');
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const year = today.getFullYear();
+    //discord notification
+    const products = await getProducts();
+    const productMap = {};
+    products.forEach(p => {
+      productMap[p.name.toLowerCase()] = p.id;
+    });
+    const deliveryDates = await getDeliveryDates();
 
     const orderCode = await appendOrder(lines, userName);
 
-    //discord notification
     const vnTime = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 
     await sendOrderToDiscord({
@@ -106,7 +110,8 @@ router.post('/submit', async (req, res) => {
         total: l.total,
         discountAmount: l.discountAmount,
         finalAmount: l.finalAmount,
-        note: l.note || ''
+        note: l.note || '',
+        deliveryDate: deliveryDates[productMap[l.product.toLowerCase()]] || ''
       })),
       userName,
       createdAt: vnTime,

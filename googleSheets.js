@@ -15,6 +15,7 @@ let config = {
     daily_sheet_id: process.env.DAILY_SHEET_ID || '',
     ketqua_sheet_id: process.env.KETQUA_SHEET_ID || '',
     product_api_url: process.env.PRODUCT_API_URL || '',
+    ngay_giao_sheet_id: process.env.NGAY_GIAO_SHEET_ID || '',
     service_account: process.env.SERVICE_ACCOUNT_JSON ? JSON.parse(process.env.SERVICE_ACCOUNT_JSON) : {}
 };
 
@@ -48,6 +49,25 @@ async function getSheetTitles(spreadsheetId) {
     return res.data.sheets.map(s => s.properties.title);
 }
 
+async function getDeliveryDates() {
+    if (!config.ngay_giao_sheet_id) {
+        throw new Error('Chưa cấu hình NGAY_GIAO_SHEET_ID');
+    }
+    const res = await sheets.spreadsheets.values.get({
+        spreadsheetId: config.ngay_giao_sheet_id,
+        range: 'Ngay_Giao!A:B',
+        valueRenderOption: 'FORMATTED_VALUE',
+    });
+    const rows = res.data.values || [];
+    const deliveryMap = {};
+    rows.slice(1).forEach(row => {  // Bỏ header
+        const id = row[0]?.toString().trim();
+        const date = row[1]?.toString().trim() || '';
+        if (id) deliveryMap[id] = date;
+    });
+    return deliveryMap;
+}
+
 // Tạo sheet mới nếu chưa có
 async function ensureTodaySheet(prefix) {
     const today = new Date();
@@ -77,7 +97,7 @@ async function ensureTodaySheet(prefix) {
         // Thêm header
         await sheets.spreadsheets.values.update({
             spreadsheetId: config.ketqua_sheet_id,
-            range: `${title}!A1:P1`,
+            range: `${title}!A1:Q1`,
             valueInputOption: 'USER_ENTERED',
             requestBody: {
                 values: [
@@ -97,6 +117,7 @@ async function ensureTodaySheet(prefix) {
                         'Thành tiền mới',
                         'Nhân viên',
                         'Thời gian',
+                        'Ngày giao',
                         'Ghi chú'
                     ],
                 ],
@@ -217,10 +238,11 @@ async function getProducts() {
                 const name = (row[0] || '').toString().trim();
                 const priceSellStr = (row[1] || '0').toString().replace(/,/g, '').trim();
                 const priceBuyStr = (row[2] || '0').toString().replace(/,/g, '').trim();
+                const id = (row[3] || '').toString().trim();
                 const sellPrice = parseFloat(priceSellStr) || 0;
                 const buyPrice = parseFloat(priceBuyStr) || 0;
                 if (name) {
-                    products.push({ name, sellPrice, buyPrice });
+                    products.push({ name, sellPrice, buyPrice, id });
                 }
             }
         }
@@ -234,6 +256,13 @@ async function getProducts() {
 // Ghi đơn hàng
 async function appendOrder(lines, userName) {
     if (lines.length === 0) throw new Error('Không có dòng dữ liệu');
+
+    const products = await getProducts();
+    const productMap = {};
+    products.forEach(p => {
+        productMap[p.name.toLowerCase()] = p.id;
+    });
+    const deliveryDates = await getDeliveryDates();
 
     const agent = lines[0].agent.trim();
     const agents = await getAgents();
@@ -285,13 +314,14 @@ async function appendOrder(lines, userName) {
             finalNew,
             userName,
             timeStr,
+            deliveryDates[productMap[productLower]] || '',
             line.note || ''
         ];
     });
 
     await sheets.spreadsheets.values.append({
         spreadsheetId: config.ketqua_sheet_id,
-        range: `${title}!A:P`,
+        range: `${title}!A:Q`,
         valueInputOption: 'USER_ENTERED',
         insertDataOption: 'INSERT_ROWS',
         requestBody: { values }
@@ -360,7 +390,7 @@ async function appendOrderMuaLai(lines, userName) {
 
     await sheets.spreadsheets.values.append({
         spreadsheetId: config.ketqua_sheet_id,
-        range: `${title}!A:P`,
+        range: `${title}!A:Q`,
         valueInputOption: 'USER_ENTERED',
         insertDataOption: 'INSERT_ROWS',
         requestBody: { values }
@@ -375,5 +405,6 @@ module.exports = {
   appendOrder,
   appendOrderMuaLai,
   get config() { return config; },
-  setConfig
+  setConfig,
+  getDeliveryDates
 };
