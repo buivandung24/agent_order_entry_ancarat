@@ -346,6 +346,34 @@
         const firstSelect = document.querySelector('tr[data-index="0"] .product-select');
         if(firstSelect) initProductSelect(firstSelect);
 
+        // Restore temp state sau reload
+        const tempRows = sessionStorage.getItem('tempRows');
+        if (tempRows) {
+          const rows = JSON.parse(tempRows);
+          rows.forEach((r, i) => {
+            if (i > 0) addRow();  // Thêm dòng nếu cần
+            const row = document.querySelectorAll('.entry-row')[i];
+            const ts = row.querySelector('.product-select').tomselect;
+            if (ts && r.product) ts.setValue(r.product);
+            row.querySelector('.qty').value = r.qty || '1';
+            row.querySelector('.note-textarea').value = r.note || '';
+            calcTotal(row.querySelector('.qty'));
+          });
+          sessionStorage.removeItem('tempRows');
+        }
+        const tempAgent = sessionStorage.getItem('tempAgent');
+        if (tempAgent) {
+          document.getElementById('selected-agent').tomselect.setValue(tempAgent);
+          sessionStorage.removeItem('tempAgent');
+        }
+        const tempDiscount = sessionStorage.getItem('tempDiscount');
+        if (tempDiscount) {
+          selectedDiscount = parseFloat(tempDiscount);
+          document.querySelectorAll('.discount').forEach(el => el.value = selectedDiscount);
+          updateGrandTotal();
+          sessionStorage.removeItem('tempDiscount');
+        }
+
         startTimer();
     });
 
@@ -390,62 +418,26 @@
       setTimeout(update, 300);
     }
     
-    async function refreshPrices() {
-      try {
+    function refreshPrices() {
         document.getElementById('session-expired-popup').style.display = 'none';
 
-        const response = await fetch('/api/products');
-        if (!response.ok) throw new Error('Không thể kết nối API sản phẩm');
-        const newProducts = await response.json();
-
-        productPricesAtLoad = {};
-        newProducts.forEach(p => {
-          const nameLower = p.name.trim().toLowerCase().replace(/"/g, '\\"');
-          productPricesAtLoad[nameLower] = p.sellPrice;
-        });
-
-        document.querySelectorAll('.product-select').forEach(select => {
-          const ts = select.tomselect;
-          if (!ts) return;
-
-          const currentValue = ts.getValue();
-
-          ts.clearOptions();
-          newProducts.forEach(p => {
-            const name = p.name.trim();
-            ts.addOption({
-              value: name,
-              text: name,
-              price: p.sellPrice.toString(),  // String to match HTML parse
-              id: p.id
-            });
-          });
-
-          if (currentValue) {
-            ts.setValue(currentValue, false);  // Trigger onChange
-          }
-
-          ts.refreshOptions(false);
-        });
-
-        // Force trigger for all rows
+        // Lưu temp state trước reload
+        const tempState = [];
         document.querySelectorAll('.entry-row').forEach(row => {
           const ts = row.querySelector('.product-select').tomselect;
-          if (ts) ts.onChange(ts.getValue());
+          tempState.push({
+            product: ts ? ts.getValue() : '',
+            qty: row.querySelector('.qty').value,
+            note: row.querySelector('.note-textarea').value
+          });
         });
+        sessionStorage.setItem('tempRows', JSON.stringify(tempState));
+        sessionStorage.setItem('tempAgent', selectedAgent);
+        sessionStorage.setItem('tempDiscount', selectedDiscount.toString());
 
-        const resetRes = await fetch('/api/reset-session', { method: 'POST' });
-        if (!resetRes.ok) throw new Error('Không thể gia hạn phiên');
-
-        const resetData = await resetRes.json();
-        sessionEndTime = new Date(resetData.sessionEndTime).getTime();
-
-        startTimer();
-      } catch (err) {
-        console.error('Lỗi refreshPrices:', err);
-        alert('❌ Lỗi: ' + err.message + '\nVui lòng tải lại trang (F5).');
+        // Reload trang để refresh full price và deliveryDates
+        location.reload();
       }
-    }
 
     function calcTotal(input) {
       if (!input) return;
