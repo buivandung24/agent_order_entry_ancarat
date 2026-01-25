@@ -14,10 +14,10 @@ const bcrypt = require('bcrypt');
   const adminExists = data.users.some(u => u.username === 'ancarat_manager_2025');
 
   if (!adminExists) {
-    const hashedPassword = bcrypt.hashSync('Anc@rat!_Secure#2025', 10);
+    const hashedPassword = bcrypt.hashSync('123456', 10);
     const adminUser = {
       id: data.users.length > 0 ? Math.max(...data.users.map(u => u.id)) + 1 : 1,
-      username: 'ancarat_manager_2025',
+      username: 'admin',
       password: hashedPassword,
       fullName: 'admin',
       role: 'admin'
@@ -25,7 +25,7 @@ const bcrypt = require('bcrypt');
 
     data.users.push(adminUser);
     saveUsers(data);
-    console.log('Đã tự động tạo tài khoản admin mặc định (username: ancarat_manager_2025, password: Anc@rat!_Secure#2025)');
+    console.log('Đã tự động tạo tài khoản admin mặc định (username: admin, password: 123456)');
   } else {
     console.log('Tài khoản admin đã tồn tại');
   }
