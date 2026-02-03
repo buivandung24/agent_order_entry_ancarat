@@ -31,7 +31,16 @@
               Thời gian tối đa mỗi phiên (phút) <span style="color:red;">*</span>
             </label>
             <input type="number" name="sessionMinutes" min="1" max="120" value="<%= typeof sessionConfig !== 'undefined' ? sessionConfig.minutes : 30 %>" 
-                  style="width:100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" required />
+                  style="width:50%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" required />
+          </div>
+          <div>
+            <label style="display:block; font-size: 14px; margin-bottom: 5px;">
+              Cho phép thêm đơn hàng:
+            </label>
+            <select name="isActive" style="width:50%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+              <option value="0" <%= (typeof sessionConfig !== 'undefined' && !sessionConfig.isActive) ? 'selected' : '' %>>Không</option>
+              <option value="1" <%= (typeof sessionConfig !== 'undefined' && sessionConfig.isActive) ? 'selected' : '' %>>Có</option>
+            </select>
           </div>
           <button type="submit" style="height: 46px; padding: 0 20px;">Lưu cấu hình</button>
         </div>

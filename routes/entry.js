@@ -18,6 +18,18 @@ function getSessionMinutes() {
   return 5;
 }
 
+function getIsActiveStatus() {
+  try {
+    if (fs.existsSync(SESSION_CONFIG_PATH)) {
+      const data = JSON.parse(fs.readFileSync(SESSION_CONFIG_PATH, 'utf8'));
+      return data.isActive || 0;
+    }
+  } catch (e) {
+    console.error('Lỗi đọc session config:', e.message);
+  }
+  return 1;
+}
+
 router.get('/', async (req, res) => {
   if (!config.banggia_sheet_id || !config.daily_sheet_id || !config.ketqua_sheet_id || !Object.keys(config.service_account).length) {
     return res.redirect('/config?error=' + encodeURIComponent('Vui lòng cấu hình Google Sheets trước khi sử dụng.'));
@@ -39,7 +51,8 @@ router.get('/', async (req, res) => {
       error: req.query.error,
       sessionMinutes: req.session.sessionMinutes || sessionMinutes,
       sessionEndTime: req.session.sessionEndTime,
-      deliveryDates: JSON.stringify(deliveryDates)
+      deliveryDates: JSON.stringify(deliveryDates),
+      isActive: getIsActiveStatus()
     });
   } catch (e) {
     console.error('Lỗi load trang nhập đơn:', e.message);

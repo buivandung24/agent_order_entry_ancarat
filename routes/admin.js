@@ -79,12 +79,14 @@ router.post('/delete/:id', (req, res) => {
 
 router.post('/set-session-time', (req, res) => {
   const minutes = parseInt(req.body.sessionMinutes);
+  const isActive = parseInt(req.body.isActive);
   if (isNaN(minutes) || minutes < 1 || minutes > 120) {
     req.flash('error', 'Thời gian phải từ 1 đến 120 phút');
     return res.redirect('/admin');
   }
-  saveSessionConfig({ minutes });
+  saveSessionConfig({ minutes, isActive });
   req.flash('success', `Đã cập nhật thời gian phiên: ${minutes} phút`);
+  req.flash('success', `Đã cập nhật trạng thái tạm ngưng: ${isActive ? 'Có' : 'Không'}`);
   res.redirect('/admin');
 });
 
