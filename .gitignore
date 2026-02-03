@@ -7,8 +7,6 @@ npm-debug.log*
 .DS_Store
 /tmp
 
-# File cấu hình thực tế chứa ID/Key (KHÔNG CÔNG KHAI)
-
 # File khóa Google Service Account
 *.key
 *.pem
@@ -19,4 +17,5 @@ service_account.json
 .env.local
 
 # Dữ liệu người dùng lưu trữ cục bộ
-
+/config/
+/data/
