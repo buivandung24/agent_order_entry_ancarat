@@ -20,4 +20,4 @@ service_account.json
 /config
 /data
 data/users.json
-config/
+config/sessionConfig.json
